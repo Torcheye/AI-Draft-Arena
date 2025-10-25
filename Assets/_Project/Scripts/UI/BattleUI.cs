@@ -18,14 +18,6 @@ namespace AdaptiveDraftArena.UI
         [Header("Timer Display")]
         [SerializeField] private TMP_Text timerText;
 
-        [Header("Player HP")]
-        [SerializeField] private Slider playerHPBar;
-        [SerializeField] private TMP_Text playerHPText;
-
-        [Header("AI HP")]
-        [SerializeField] private Slider aiHPBar;
-        [SerializeField] private TMP_Text aiHPText;
-
         [Header("Victory Banner")]
         [SerializeField] private GameObject victoryBanner;
         [SerializeField] private TMP_Text winnerText;
@@ -62,9 +54,6 @@ namespace AdaptiveDraftArena.UI
 
         private void Awake()
         {
-            // Internal initialization
-            InitializeHPBars();
-
             // Hide victory banner initially
             if (victoryBanner != null)
             {
@@ -83,12 +72,6 @@ namespace AdaptiveDraftArena.UI
 
             ValidateReferences();
             SubscribeToEvents();
-        }
-
-        private void Update()
-        {
-            // Poll HP from TargetingSystem every frame for smooth updates
-            UpdateHPDisplays();
         }
 
         private void OnDestroy()
@@ -123,44 +106,10 @@ namespace AdaptiveDraftArena.UI
             #if UNITY_EDITOR
             if (battleController == null) Debug.LogWarning($"BattleUI '{name}': battleController not assigned!", this);
             if (timerText == null) Debug.LogWarning($"BattleUI '{name}': timerText not assigned!", this);
-            if (playerHPBar == null) Debug.LogWarning($"BattleUI '{name}': playerHPBar not assigned!", this);
-            if (aiHPBar == null) Debug.LogWarning($"BattleUI '{name}': aiHPBar not assigned!", this);
-            if (playerHPText == null) Debug.LogWarning($"BattleUI '{name}': playerHPText not assigned!", this);
-            if (aiHPText == null) Debug.LogWarning($"BattleUI '{name}': aiHPText not assigned!", this);
             if (victoryBanner == null) Debug.LogWarning($"BattleUI '{name}': victoryBanner not assigned!", this);
             if (winnerText == null) Debug.LogWarning($"BattleUI '{name}': winnerText not assigned!", this);
             if (bannerCanvasGroup == null) Debug.LogWarning($"BattleUI '{name}': bannerCanvasGroup not assigned!", this);
             #endif
-        }
-
-        private void InitializeHPBars()
-        {
-            // Cache and set HP bar colors
-            if (playerHPBar != null && playerHPBar.fillRect != null)
-            {
-                playerHPFill = playerHPBar.fillRect.GetComponent<Image>();
-                if (playerHPFill != null)
-                {
-                    playerHPFill.color = playerHPColor;
-                }
-                else
-                {
-                    Debug.LogWarning($"BattleUI: playerHPBar.fillRect missing Image component!", this);
-                }
-            }
-
-            if (aiHPBar != null && aiHPBar.fillRect != null)
-            {
-                aiHPFill = aiHPBar.fillRect.GetComponent<Image>();
-                if (aiHPFill != null)
-                {
-                    aiHPFill.color = aiHPColor;
-                }
-                else
-                {
-                    Debug.LogWarning($"BattleUI: aiHPBar.fillRect missing Image component!", this);
-                }
-            }
         }
 
         private void OnBattleStarted()
@@ -168,19 +117,6 @@ namespace AdaptiveDraftArena.UI
             // Initialize max HP based on starting troops
             maxPlayerHP = TargetingSystem.GetTotalHP(Team.Player);
             maxAIHP = TargetingSystem.GetTotalHP(Team.AI);
-
-            // Set HP bar max values
-            if (playerHPBar != null)
-            {
-                playerHPBar.maxValue = maxPlayerHP;
-                playerHPBar.value = maxPlayerHP;
-            }
-
-            if (aiHPBar != null)
-            {
-                aiHPBar.maxValue = maxAIHP;
-                aiHPBar.value = maxAIHP;
-            }
 
             // Hide victory banner
             if (victoryBanner != null)
@@ -211,35 +147,6 @@ namespace AdaptiveDraftArena.UI
             else
             {
                 timerText.color = normalColor;
-            }
-        }
-
-        private void UpdateHPDisplays()
-        {
-            // Get current HP from TargetingSystem
-            var playerHP = TargetingSystem.GetTotalHP(Team.Player);
-            var aiHP = TargetingSystem.GetTotalHP(Team.AI);
-
-            // Update HP bars
-            if (playerHPBar != null)
-            {
-                playerHPBar.value = playerHP;
-            }
-
-            if (aiHPBar != null)
-            {
-                aiHPBar.value = aiHP;
-            }
-
-            // Update HP text
-            if (playerHPText != null)
-            {
-                playerHPText.SetText("{0:F1} HP", playerHP);
-            }
-
-            if (aiHPText != null)
-            {
-                aiHPText.SetText("{0:F1} HP", aiHP);
             }
         }
 
@@ -317,17 +224,6 @@ namespace AdaptiveDraftArena.UI
             if (victoryBanner != null)
             {
                 victoryBanner.SetActive(false);
-            }
-
-            // Reset HP displays
-            if (playerHPBar != null)
-            {
-                playerHPBar.value = 0f;
-            }
-
-            if (aiHPBar != null)
-            {
-                aiHPBar.value = 0f;
             }
         }
     }
