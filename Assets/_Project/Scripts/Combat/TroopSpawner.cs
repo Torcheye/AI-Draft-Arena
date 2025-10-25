@@ -13,11 +13,15 @@ namespace AdaptiveDraftArena.Combat
         [Header("Configuration")]
         private GameConfig config;
 
-        private void Awake()
+        private void Start()
         {
             if (GameManager.Instance != null)
             {
                 config = GameManager.Instance.Config;
+            }
+            else
+            {
+                Debug.LogError("TroopSpawner: GameManager.Instance is null!");
             }
         }
 
@@ -32,6 +36,12 @@ namespace AdaptiveDraftArena.Combat
             if (!combination.IsValid())
             {
                 Debug.LogError($"TroopSpawner: Invalid combination {combination.name}!");
+                return new List<TroopController>();
+            }
+
+            if (config == null)
+            {
+                Debug.LogError("TroopSpawner: Config is null! Cannot spawn troops.");
                 return new List<TroopController>();
             }
 
