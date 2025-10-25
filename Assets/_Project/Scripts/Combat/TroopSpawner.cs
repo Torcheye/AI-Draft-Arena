@@ -13,7 +13,9 @@ namespace AdaptiveDraftArena.Combat
         [Header("Configuration")]
         private GameConfig config;
 
-        private void Start()
+        private static readonly List<TroopController> EmptyList = new List<TroopController>(0);
+
+        private void Awake()
         {
             if (GameManager.Instance != null)
             {
@@ -30,28 +32,29 @@ namespace AdaptiveDraftArena.Combat
             if (combination == null)
             {
                 Debug.LogError("TroopSpawner: Cannot spawn null combination!");
-                return new List<TroopController>();
+                return EmptyList;
             }
 
             if (!combination.IsValid())
             {
                 Debug.LogError($"TroopSpawner: Invalid combination {combination.name}!");
-                return new List<TroopController>();
+                return EmptyList;
             }
 
             if (config == null)
             {
                 Debug.LogError("TroopSpawner: Config is null! Cannot spawn troops.");
-                return new List<TroopController>();
+                return EmptyList;
             }
 
-            var spawnedTroops = new List<TroopController>();
-            var spawnZone = team == Team.Player ? config.playerSpawnZone : config.aiSpawnZone;
+            var spawnedTroops = new List<TroopController>(combination.amount);
+            var spawnCenter = team == Team.Player ? config.playerSpawnCenter : config.aiSpawnCenter;
+            var spawnSize = team == Team.Player ? config.playerSpawnSize : config.aiSpawnSize;
 
             // Spawn the specified amount of troops
             for (int i = 0; i < combination.amount; i++)
             {
-                var spawnPos = GetRandomPositionInZone(spawnZone);
+                var spawnPos = GetRandomPositionInZone(spawnCenter, spawnSize, config.groundLevel);
                 var troop = SpawnSingleTroop(combination, team, spawnPos, parent);
 
                 if (troop != null)
@@ -65,7 +68,7 @@ namespace AdaptiveDraftArena.Combat
             return spawnedTroops;
         }
 
-        private TroopController SpawnSingleTroop(TroopCombination combination, Team team, Vector2 position, Transform parent)
+        private TroopController SpawnSingleTroop(TroopCombination combination, Team team, Vector3 position, Transform parent)
         {
             // Instantiate from prefab
             var troopObj = Instantiate(troopPrefab, position, Quaternion.identity, parent);
@@ -85,11 +88,11 @@ namespace AdaptiveDraftArena.Combat
             return troopController;
         }
 
-        private Vector2 GetRandomPositionInZone(Rect zone)
+        private Vector3 GetRandomPositionInZone(Vector3 center, Vector3 size, float groundLevel)
         {
-            var x = Random.Range(zone.xMin, zone.xMax);
-            var y = Random.Range(zone.yMin, zone.yMax);
-            return new Vector2(x, y);
+            var x = Random.Range(center.x - size.x / 2f, center.x + size.x / 2f);
+            var z = Random.Range(center.z - size.z / 2f, center.z + size.z / 2f);
+            return new Vector3(x, groundLevel, z);
         }
 
         public void SetTroopPrefab(GameObject prefab)
