@@ -31,7 +31,26 @@ namespace AdaptiveDraftArena.Match
 
         private void Awake()
         {
-            // Critical: Validate GameManager exists
+            // Auto-populate controller references if not assigned
+            if (draftController == null)
+            {
+                draftController = GetComponent<DraftController>();
+            }
+
+            if (battleController == null)
+            {
+                battleController = GetComponent<BattleController>();
+            }
+
+            if (troopSpawner == null)
+            {
+                troopSpawner = GetComponent<TroopSpawner>();
+            }
+        }
+
+        private void Start()
+        {
+            // Critical: Validate GameManager exists (after GameManager.Awake() has run)
             if (GameManager.Instance == null)
             {
                 Debug.LogError("MatchController requires GameManager in scene! Disabling component.");
@@ -52,35 +71,23 @@ namespace AdaptiveDraftArena.Match
             // Validate controller references
             if (draftController == null)
             {
-                draftController = GetComponent<DraftController>();
-                if (draftController == null)
-                {
-                    Debug.LogError("DraftController not found! Please assign in Inspector or add component.");
-                    enabled = false;
-                    return;
-                }
+                Debug.LogError("DraftController not found! Please assign in Inspector or add component.");
+                enabled = false;
+                return;
             }
 
             if (battleController == null)
             {
-                battleController = GetComponent<BattleController>();
-                if (battleController == null)
-                {
-                    Debug.LogError("BattleController not found! Please assign in Inspector or add component.");
-                    enabled = false;
-                    return;
-                }
+                Debug.LogError("BattleController not found! Please assign in Inspector or add component.");
+                enabled = false;
+                return;
             }
 
             if (troopSpawner == null)
             {
-                troopSpawner = GetComponent<TroopSpawner>();
-                if (troopSpawner == null)
-                {
-                    Debug.LogError("TroopSpawner not found! Please assign in Inspector or add component.");
-                    enabled = false;
-                    return;
-                }
+                Debug.LogError("TroopSpawner not found! Please assign in Inspector or add component.");
+                enabled = false;
+                return;
             }
 
             Debug.Log("MatchController initialized successfully");
