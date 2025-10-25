@@ -1,6 +1,8 @@
 using UnityEngine;
 using AdaptiveDraftArena.Combat;
+using AdaptiveDraftArena.Match;
 using AdaptiveDraftArena.Modules;
+using Cysharp.Threading.Tasks;
 
 namespace AdaptiveDraftArena.Core
 {
@@ -26,6 +28,9 @@ namespace AdaptiveDraftArena.Core
             {
                 SpawnTestTroops();
             }
+            
+            var matchController = GetComponent<MatchController>();
+            matchController.StartMatchAsync().Forget();
         }
 
         private void Update()

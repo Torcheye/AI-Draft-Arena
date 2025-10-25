@@ -36,6 +36,12 @@ namespace AdaptiveDraftArena.Draft
 
         private void Awake()
         {
+            CurrentPlayerOptions = new List<TroopCombination>();
+            CurrentAIOptions = new List<TroopCombination>();
+        }
+
+        private void Start()
+        {
             if (GameManager.Instance == null)
             {
                 Debug.LogError("DraftController requires GameManager in scene!");
@@ -51,9 +57,6 @@ namespace AdaptiveDraftArena.Draft
                 enabled = false;
                 return;
             }
-
-            CurrentPlayerOptions = new List<TroopCombination>();
-            CurrentAIOptions = new List<TroopCombination>();
         }
 
         public async UniTask<(TroopCombination playerPick, TroopCombination aiPick)> StartDraftAsync(

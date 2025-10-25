@@ -20,7 +20,7 @@ namespace AdaptiveDraftArena.Battle
         private GameConfig config;
         private CancellationTokenSource battleCts;
 
-        private void Awake()
+        private void Start()
         {
             if (GameManager.Instance == null)
             {
