@@ -5,43 +5,22 @@ namespace AdaptiveDraftArena.Visual
 {
     public class TroopVisuals : MonoBehaviour
     {
-        [Header("Sprite Renderers")]
-        [SerializeField] private SpriteRenderer bodyRenderer;
-        [SerializeField] private SpriteRenderer weaponRenderer;
+        [Header("3D Models")]
+        [SerializeField] private GameObject bodyModel;
+        [SerializeField] private GameObject weaponModel;
+        [SerializeField] private Transform weaponSocket;
 
         [Header("Particle Effects")]
         [SerializeField] private Transform particleAnchor;
 
         private GameObject currentAuraEffect;
         private TroopCombination combination;
-
-        private void Awake()
-        {
-            // Auto-setup if renderers not assigned
-            if (bodyRenderer == null)
-            {
-                bodyRenderer = GetComponent<SpriteRenderer>();
-                if (bodyRenderer == null)
-                {
-                    bodyRenderer = gameObject.AddComponent<SpriteRenderer>();
-                }
-            }
-
-            if (weaponRenderer == null)
-            {
-                // Create weapon renderer as child
-                var weaponObj = new GameObject("Weapon");
-                weaponObj.transform.SetParent(transform);
-                weaponObj.transform.localPosition = Vector3.zero;
-                weaponRenderer = weaponObj.AddComponent<SpriteRenderer>();
-                weaponRenderer.sortingOrder = bodyRenderer.sortingOrder + 1;
-            }
-
-            if (particleAnchor == null)
-            {
-                particleAnchor = transform;
-            }
-        }
+        private Renderer[] bodyRenderers;
+        private Renderer[] weaponRenderers;
+        private MaterialPropertyBlock propertyBlock;
+        private Color[][] cachedOriginalColors;
+        private Coroutine flashCoroutine;
+        private static readonly int ColorProperty = Shader.PropertyToID("_Color");
 
         public void Compose(TroopCombination troopCombination)
         {
@@ -53,35 +32,71 @@ namespace AdaptiveDraftArena.Visual
                 return;
             }
 
-            // Set body sprite
-            if (combination.body != null && combination.body.bodySprite != null)
+            // Clean up existing models
+            if (bodyModel != null) Destroy(bodyModel);
+            if (weaponModel != null) Destroy(weaponModel);
+            if (weaponSocket != null) Destroy(weaponSocket.gameObject);
+
+            // Instantiate body model
+            if (combination.body != null && combination.body.bodyModelPrefab != null)
             {
-                bodyRenderer.sprite = combination.body.bodySprite;
+                bodyModel = Instantiate(combination.body.bodyModelPrefab, transform);
+                bodyModel.transform.localPosition = Vector3.zero;
+                bodyModel.transform.localRotation = Quaternion.identity;
+                bodyRenderers = bodyModel.GetComponentsInChildren<Renderer>();
+
+                // Create weapon socket at specified position
+                var socketObj = new GameObject("WeaponSocket");
+                socketObj.transform.SetParent(bodyModel.transform);
+                socketObj.transform.localPosition = combination.body.weaponSocketPosition;
+                socketObj.transform.localRotation = Quaternion.identity;
+                weaponSocket = socketObj.transform;
+            }
+            else
+            {
+                // Fallback: create simple cube placeholder
+                bodyModel = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                bodyModel.transform.SetParent(transform);
+                bodyModel.transform.localPosition = Vector3.zero;
+                bodyRenderers = bodyModel.GetComponentsInChildren<Renderer>();
+
+                // Create weapon socket at default position
+                var socketObj = new GameObject("WeaponSocket");
+                socketObj.transform.SetParent(bodyModel.transform);
+                socketObj.transform.localPosition = new Vector3(0.5f, 0.5f, 0f);
+                weaponSocket = socketObj.transform;
             }
 
-            // Set weapon sprite
-            if (combination.weapon != null && combination.weapon.weaponSprite != null)
+            // Instantiate weapon model
+            if (combination.weapon != null && weaponSocket != null)
             {
-                weaponRenderer.sprite = combination.weapon.weaponSprite;
-
-                // Position weapon at anchor point
-                if (combination.body != null)
+                if (combination.weapon.weaponModelPrefab != null)
                 {
-                    weaponRenderer.transform.localPosition = combination.body.weaponAnchorPoint;
+                    weaponModel = Instantiate(combination.weapon.weaponModelPrefab, weaponSocket);
+                    weaponModel.transform.localPosition = combination.weapon.modelOffset;
+                    weaponModel.transform.localRotation = Quaternion.identity;
+                    weaponRenderers = weaponModel.GetComponentsInChildren<Renderer>();
                 }
-
-                // Apply weapon offset
-                weaponRenderer.transform.localPosition += (Vector3)combination.weapon.spriteOffset;
+                else
+                {
+                    // Fallback: create small cube for weapon
+                    weaponModel = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    weaponModel.transform.SetParent(weaponSocket);
+                    weaponModel.transform.localPosition = Vector3.zero;
+                    weaponModel.transform.localScale = Vector3.one * 0.3f;
+                    weaponRenderers = weaponModel.GetComponentsInChildren<Renderer>();
+                }
             }
 
-            // Apply element color tint
+            // Apply element color tint to all renderers
             if (combination.effect != null)
             {
-                bodyRenderer.color = combination.effect.tintColor;
+                ApplyTint(combination.effect.tintColor);
 
                 // Spawn aura particle effect
                 if (combination.effect.auraPrefab != null)
                 {
+                    if (particleAnchor == null) particleAnchor = transform;
                     currentAuraEffect = Instantiate(combination.effect.auraPrefab, particleAnchor);
                     currentAuraEffect.transform.localPosition = Vector3.zero;
                 }
@@ -92,25 +107,87 @@ namespace AdaptiveDraftArena.Visual
             {
                 transform.localScale = Vector3.one * combination.body.size;
             }
+
+            // Cache original colors for flash effect
+            CacheOriginalColors();
+        }
+
+        private void ApplyTint(Color tint)
+        {
+            if (bodyRenderers == null || bodyRenderers.Length == 0)
+                return;
+
+            if (propertyBlock == null)
+                propertyBlock = new MaterialPropertyBlock();
+
+            foreach (var renderer in bodyRenderers)
+            {
+                renderer.GetPropertyBlock(propertyBlock);
+                propertyBlock.SetColor(ColorProperty, tint);
+                renderer.SetPropertyBlock(propertyBlock);
+            }
+        }
+
+        private void CacheOriginalColors()
+        {
+            if (bodyRenderers == null || bodyRenderers.Length == 0)
+                return;
+
+            cachedOriginalColors = new Color[bodyRenderers.Length][];
+            for (int i = 0; i < bodyRenderers.Length; i++)
+            {
+                var materials = bodyRenderers[i].materials;
+                cachedOriginalColors[i] = new Color[materials.Length];
+            }
         }
 
         public void PlayHitEffect()
         {
-            // Flash white briefly
-            if (bodyRenderer != null)
-            {
-                StartCoroutine(FlashRoutine());
-            }
+            if (bodyRenderers == null || bodyRenderers.Length == 0)
+                return;
+
+            if (flashCoroutine != null)
+                StopCoroutine(flashCoroutine);
+
+            flashCoroutine = StartCoroutine(FlashRoutine());
         }
 
         private System.Collections.IEnumerator FlashRoutine()
         {
-            var originalColor = bodyRenderer.color;
-            bodyRenderer.color = Color.white;
+            if (propertyBlock == null)
+                propertyBlock = new MaterialPropertyBlock();
+
+            // Store original colors and apply white
+            for (int i = 0; i < bodyRenderers.Length; i++)
+            {
+                var materials = bodyRenderers[i].materials;
+                for (int j = 0; j < materials.Length; j++)
+                {
+                    cachedOriginalColors[i][j] = materials[j].color;
+                    materials[j].color = Color.white;
+                }
+            }
 
             yield return new WaitForSeconds(0.1f);
 
-            bodyRenderer.color = originalColor;
+            // Restore original colors using MaterialPropertyBlock
+            for (int i = 0; i < bodyRenderers.Length; i++)
+            {
+                bodyRenderers[i].GetPropertyBlock(propertyBlock);
+                propertyBlock.SetColor(ColorProperty, cachedOriginalColors[i][0]);
+                bodyRenderers[i].SetPropertyBlock(propertyBlock);
+            }
+
+            flashCoroutine = null;
+        }
+
+        private void OnDisable()
+        {
+            if (flashCoroutine != null)
+            {
+                StopCoroutine(flashCoroutine);
+                flashCoroutine = null;
+            }
         }
 
         private void OnDestroy()

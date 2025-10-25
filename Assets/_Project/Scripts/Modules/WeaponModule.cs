@@ -25,9 +25,14 @@ namespace AdaptiveDraftArena.Modules
         [Header("AOE Settings")]
         public float aoeRadius = 0f;
 
-        [Header("Visuals")]
-        public Sprite weaponSprite;
-        public Vector2 spriteOffset;
+        [Header("Visuals - 3D")]
+        public GameObject weaponModelPrefab; // 3D model for gameplay
+        public Vector3 modelOffset; // 3D offset from weapon socket
+
+        [Header("Visuals - UI")]
+        public Sprite weaponSprite; // Icon for draft/UI screens
+
+        [Header("Animation")]
         public AnimationClip attackAnimation;
     }
 }

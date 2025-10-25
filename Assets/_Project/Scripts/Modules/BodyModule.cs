@@ -19,9 +19,12 @@ namespace AdaptiveDraftArena.Modules
         public float attackRange = 1.5f;
         public float size = 1f;
 
-        [Header("Visuals")]
-        public Sprite bodySprite;
-        public Vector2 weaponAnchorPoint;
+        [Header("Visuals - 3D")]
+        public GameObject bodyModelPrefab; // 3D model for gameplay
+        public Vector3 weaponSocketPosition; // 3D position for weapon attachment
+
+        [Header("Visuals - UI")]
+        public Sprite bodySprite; // Icon for draft/UI screens
 
         [Header("Role")]
         public TroopRole role = TroopRole.DPS;
