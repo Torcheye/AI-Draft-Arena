@@ -105,6 +105,9 @@ namespace AdaptiveDraftArena.Combat
         {
             CurrentTarget.Health.TakeDamage(damage, owner.gameObject);
             Debug.Log($"{owner.name} melee attacks {CurrentTarget.name} for {damage} damage");
+
+            // Notify ability system of attack
+            owner.AbilityExecutor?.OnAttackPerformed(CurrentTarget, damage);
         }
 
         private void ApplyAOEDamage(float damage)
@@ -137,7 +140,11 @@ namespace AdaptiveDraftArena.Combat
             var elementMultiplier = TroopStats.CalculateElementMultiplier(effect, CurrentTarget.Combination.effect);
             baseDamage *= elementMultiplier;
 
-            // TODO: Apply ability modifiers
+            // Apply ability modifiers (Berserk, FirstStrike, etc.)
+            if (owner.AbilityExecutor != null)
+            {
+                baseDamage = owner.AbilityExecutor.ModifyOutgoingDamage(baseDamage, CurrentTarget);
+            }
 
             return baseDamage;
         }

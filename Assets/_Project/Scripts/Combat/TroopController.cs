@@ -1,4 +1,5 @@
 using UnityEngine;
+using AdaptiveDraftArena.Abilities;
 using AdaptiveDraftArena.Modules;
 using AdaptiveDraftArena.Visual;
 
@@ -16,6 +17,7 @@ namespace AdaptiveDraftArena.Combat
         public TroopCombat Combat { get; private set; }
         public TargetingSystem Targeting { get; private set; }
         public TroopVisuals Visuals { get; private set; }
+        public AbilityExecutor AbilityExecutor { get; private set; }
 
         // State
         public bool IsAlive => Health != null && Health.IsAlive;
@@ -39,6 +41,9 @@ namespace AdaptiveDraftArena.Combat
 
             Visuals = GetComponent<TroopVisuals>();
             if (Visuals == null) Visuals = gameObject.AddComponent<TroopVisuals>();
+
+            AbilityExecutor = GetComponent<AbilityExecutor>();
+            if (AbilityExecutor == null) AbilityExecutor = gameObject.AddComponent<AbilityExecutor>();
         }
 
         public void Initialize(TroopCombination combination, Team team, Vector2 spawnPosition)
@@ -62,6 +67,7 @@ namespace AdaptiveDraftArena.Combat
             Combat.Initialize(this);
             Targeting.Initialize(team);
             Visuals.Compose(combination);
+            AbilityExecutor.Initialize(combination.ability, this);
 
             // Subscribe to death event
             Health.OnDeath += HandleDeath;
@@ -80,6 +86,9 @@ namespace AdaptiveDraftArena.Combat
         private void HandleDeath()
         {
             Debug.Log($"{name} has died!");
+
+            // Notify ability system
+            AbilityExecutor.OnOwnerDeath();
 
             // Unregister from targeting system
             TargetingSystem.UnregisterTroop(this);

@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using AdaptiveDraftArena.Abilities;
 
 namespace AdaptiveDraftArena.Combat
 {
@@ -16,22 +17,46 @@ namespace AdaptiveDraftArena.Combat
         public event Action<float> OnHeal; // heal amount
         public event Action<float> OnHealthChanged; // new HP value
 
+        private TroopController owner;
+
         public void Initialize(float maxHP)
         {
             MaxHP = Mathf.Max(1f, maxHP);
             CurrentHP = MaxHP;
             OnHealthChanged?.Invoke(CurrentHP);
+
+            owner = GetComponent<TroopController>();
         }
 
         public void TakeDamage(float damage, GameObject attacker = null)
         {
             if (!IsAlive || damage <= 0) return;
 
+            // Allow abilities to modify incoming damage (Dodge, LastStand, etc.)
+            if (owner != null && owner.AbilityExecutor != null && attacker != null)
+            {
+                var attackerTroop = attacker.GetComponent<TroopController>();
+                if (attackerTroop != null)
+                {
+                    damage = owner.AbilityExecutor.ModifyIncomingDamage(damage, attackerTroop);
+                }
+            }
+
             var actualDamage = Mathf.Min(damage, CurrentHP);
             CurrentHP -= actualDamage;
 
             OnTakeDamage?.Invoke(actualDamage, attacker);
             OnHealthChanged?.Invoke(CurrentHP);
+
+            // Notify ability system
+            if (owner != null && owner.AbilityExecutor != null && attacker != null)
+            {
+                var attackerTroop = attacker.GetComponent<TroopController>();
+                if (attackerTroop != null)
+                {
+                    owner.AbilityExecutor.OnDamageTaken(actualDamage, attackerTroop);
+                }
+            }
 
             if (CurrentHP <= 0)
             {
