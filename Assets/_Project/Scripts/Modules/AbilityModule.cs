@@ -36,15 +36,32 @@ namespace AdaptiveDraftArena.Modules
         public GameObject vfxPrefab;
         public Sprite statusIcon;
 
-        public Dictionary<string, float> GetParameters()
+        // Cached parameters dictionary to prevent GC allocations
+        private Dictionary<string, float> cachedParameters;
+
+        public IReadOnlyDictionary<string, float> GetParameters()
         {
-            var dict = new Dictionary<string, float>();
-            foreach (var param in parametersList)
+            if (cachedParameters == null)
             {
-                dict[param.key] = param.value;
+                cachedParameters = new Dictionary<string, float>();
+                foreach (var param in parametersList)
+                {
+                    cachedParameters[param.key] = param.value;
+                }
             }
-            return dict;
+            return cachedParameters;
         }
+
+        // Provide direct access to parameters list for iteration without dictionary lookup
+        public IReadOnlyList<AbilityParameter> Parameters => parametersList;
+
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            // Invalidate cache when parameters change in editor
+            cachedParameters = null;
+        }
+#endif
     }
 
     [System.Serializable]

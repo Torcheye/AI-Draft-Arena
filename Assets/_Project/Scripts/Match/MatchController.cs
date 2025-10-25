@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
 using AdaptiveDraftArena.Core;
@@ -18,22 +19,64 @@ namespace AdaptiveDraftArena.Match
         public event Action<Team> OnMatchEnded;
 
         private GameConfig config;
+        private CancellationTokenSource matchCts;
 
         private void Awake()
         {
+            // Critical: Validate GameManager exists
+            if (GameManager.Instance == null)
+            {
+                Debug.LogError("MatchController requires GameManager in scene! Disabling component.");
+                enabled = false;
+                return;
+            }
+
             config = GameManager.Instance.Config;
+
+            // Critical: Validate Config is assigned
+            if (config == null)
+            {
+                Debug.LogError("GameConfig is null in GameManager! Disabling MatchController.");
+                enabled = false;
+                return;
+            }
+
+            Debug.Log("MatchController initialized successfully");
         }
 
-        public async void StartMatch()
+        public async UniTask StartMatchAsync()
         {
+            // Cancel any existing match
+            matchCts?.Cancel();
+            matchCts?.Dispose();
+            matchCts = new CancellationTokenSource();
+
             Debug.Log("Match starting...");
             State = new MatchState();
 
             // Load base combinations
             LoadBaseCombinations();
 
-            // Run match loop
-            await RunMatchLoop();
+            try
+            {
+                // Run match loop with cancellation support
+                await RunMatchLoop(matchCts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                Debug.Log("Match was cancelled");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Match error: {ex.Message}");
+            }
+        }
+
+        private void OnDestroy()
+        {
+            // Clean up cancellation token on destruction
+            matchCts?.Cancel();
+            matchCts?.Dispose();
         }
 
         private void LoadBaseCombinations()
@@ -45,10 +88,10 @@ namespace AdaptiveDraftArena.Match
             Debug.Log($"Loaded {State.BaseCombinations.Count} base combinations");
         }
 
-        private async UniTask RunMatchLoop()
+        private async UniTask RunMatchLoop(CancellationToken cancellationToken)
         {
             ChangePhase(MatchPhase.MatchStart);
-            await UniTask.Delay(TimeSpan.FromSeconds(1));
+            await UniTask.Delay(TimeSpan.FromSeconds(1), cancellationToken: cancellationToken);
 
             // Main match loop - best of 7
             for (int round = 1; round <= config.maxRounds; round++)
@@ -56,7 +99,7 @@ namespace AdaptiveDraftArena.Match
                 State.CurrentRound = round;
                 OnRoundStarted?.Invoke(round);
 
-                await RunRound(round);
+                await RunRound(round, cancellationToken);
 
                 // Check if match is over
                 if (State.IsMatchOver())
@@ -65,7 +108,7 @@ namespace AdaptiveDraftArena.Match
                 }
 
                 // Brief pause between rounds
-                await UniTask.Delay(TimeSpan.FromSeconds(1));
+                await UniTask.Delay(TimeSpan.FromSeconds(1), cancellationToken: cancellationToken);
             }
 
             // Match end
@@ -76,60 +119,60 @@ namespace AdaptiveDraftArena.Match
             Debug.Log($"Match ended! Winner: {winner}");
         }
 
-        private async UniTask RunRound(int roundNumber)
+        private async UniTask RunRound(int roundNumber, CancellationToken cancellationToken)
         {
             Debug.Log($"=== Round {roundNumber} Start ===");
 
             // Draft Phase
-            await RunDraftPhase();
+            await RunDraftPhase(cancellationToken);
 
             // Spawn Phase
-            await RunSpawnPhase();
+            await RunSpawnPhase(cancellationToken);
 
             // Battle Phase
-            await RunBattlePhase();
+            await RunBattlePhase(cancellationToken);
 
             // Round End Phase
-            await RunRoundEndPhase();
+            await RunRoundEndPhase(cancellationToken);
         }
 
-        private async UniTask RunDraftPhase()
+        private async UniTask RunDraftPhase(CancellationToken cancellationToken)
         {
             ChangePhase(MatchPhase.Draft);
             Debug.Log("Draft phase started");
 
             // TODO: Implement draft logic
             // For now, just wait for draft duration
-            await UniTask.Delay(TimeSpan.FromSeconds(config.draftDuration));
+            await UniTask.Delay(TimeSpan.FromSeconds(config.draftDuration), cancellationToken: cancellationToken);
 
             Debug.Log("Draft phase ended");
         }
 
-        private async UniTask RunSpawnPhase()
+        private async UniTask RunSpawnPhase(CancellationToken cancellationToken)
         {
             ChangePhase(MatchPhase.Spawn);
             Debug.Log("Spawn phase started");
 
             // TODO: Implement spawn logic
             // For now, just wait 1 second
-            await UniTask.Delay(TimeSpan.FromSeconds(1));
+            await UniTask.Delay(TimeSpan.FromSeconds(1), cancellationToken: cancellationToken);
 
             Debug.Log("Spawn phase ended");
         }
 
-        private async UniTask RunBattlePhase()
+        private async UniTask RunBattlePhase(CancellationToken cancellationToken)
         {
             ChangePhase(MatchPhase.Battle);
             Debug.Log("Battle phase started");
 
             // TODO: Implement battle logic
             // For now, just wait for battle duration
-            await UniTask.Delay(TimeSpan.FromSeconds(config.battleDuration));
+            await UniTask.Delay(TimeSpan.FromSeconds(config.battleDuration), cancellationToken: cancellationToken);
 
             Debug.Log("Battle phase ended");
         }
 
-        private async UniTask RunRoundEndPhase()
+        private async UniTask RunRoundEndPhase(CancellationToken cancellationToken)
         {
             ChangePhase(MatchPhase.RoundEnd);
             Debug.Log("Round end phase started");
@@ -155,7 +198,7 @@ namespace AdaptiveDraftArena.Match
 
             // TODO: AI generation would happen here
 
-            await UniTask.Delay(TimeSpan.FromSeconds(2));
+            await UniTask.Delay(TimeSpan.FromSeconds(2), cancellationToken: cancellationToken);
 
             Debug.Log("Round end phase ended");
         }
