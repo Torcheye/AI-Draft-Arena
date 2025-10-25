@@ -13,7 +13,15 @@ namespace AdaptiveDraftArena.Abilities
         private TroopController owner;
         private float hpBonus = 2f;
         private float radius = 3f;
-        private List<TroopController> buffedTroops = new List<TroopController>();
+        private HashSet<TroopController> buffedTroops = new HashSet<TroopController>();
+
+        // Performance optimizations
+        private List<TroopController> cachedAllies;
+        private float allyRefreshTimer;
+        private float updateTimer;
+
+        private const float AllyRefreshInterval = 0.5f;
+        private const float UpdateInterval = 0.1f;
 
         public void Initialize(AbilityModule module, TroopController troopOwner)
         {
@@ -36,39 +44,63 @@ namespace AdaptiveDraftArena.Abilities
 
         public void Update(float deltaTime)
         {
-            // Find nearby allies and apply HP bonus
-            var allies = TargetingSystem.GetAliveTroops(owner.Team);
+            // Throttle updates to 10 FPS for non-critical aura checks
+            updateTimer += deltaTime;
+            if (updateTimer < UpdateInterval) return;
+            updateTimer = 0f;
 
-            // Remove buff from troops that left radius
-            for (int i = buffedTroops.Count - 1; i >= 0; i--)
+            // Cache ally list with periodic refresh
+            allyRefreshTimer -= deltaTime;
+            if (allyRefreshTimer <= 0f || cachedAllies == null)
             {
-                var troop = buffedTroops[i];
+                cachedAllies = TargetingSystem.GetAliveTroops(owner.Team);
+                allyRefreshTimer = AllyRefreshInterval;
+            }
+
+            var ownerPos = owner.transform.position; // Cache position
+            var sqrRadius = radius * radius;
+
+            // Remove buff from troops that left radius (reverse iteration for safe removal)
+            var troopsToRemove = new List<TroopController>();
+            foreach (var troop in buffedTroops)
+            {
                 if (troop == null || troop == owner || !troop.IsAlive)
                 {
-                    buffedTroops.RemoveAt(i);
+                    troopsToRemove.Add(troop);
                     continue;
                 }
 
-                var distance = Vector2.Distance(owner.transform.position, troop.transform.position);
-                if (distance > radius)
+                var sqrDistance = ownerPos.SqrDistanceXZ(troop.transform.position);
+                if (sqrDistance > sqrRadius)
                 {
-                    // Remove buff
-                    troop.Health.ModifyMaxHP(troop.Health.MaxHP - hpBonus);
-                    buffedTroops.RemoveAt(i);
+                    // Remove buff with null safety
+                    if (troop.Health != null)
+                    {
+                        troop.Health.ModifyMaxHP(troop.Health.MaxHP - hpBonus);
+                    }
+                    troopsToRemove.Add(troop);
                 }
             }
 
+            foreach (var troop in troopsToRemove)
+            {
+                buffedTroops.Remove(troop);
+            }
+
             // Add buff to troops that entered radius
-            foreach (var ally in allies)
+            foreach (var ally in cachedAllies)
             {
                 if (ally == owner || buffedTroops.Contains(ally)) continue;
 
-                var distance = Vector2.Distance(owner.transform.position, ally.transform.position);
-                if (distance <= radius)
+                var sqrDistance = ownerPos.SqrDistanceXZ(ally.transform.position);
+                if (sqrDistance <= sqrRadius)
                 {
-                    // Apply buff
-                    ally.Health.ModifyMaxHP(ally.Health.MaxHP + hpBonus);
-                    buffedTroops.Add(ally);
+                    // Apply buff with null safety
+                    if (ally != null && ally.Health != null && ally.IsAlive)
+                    {
+                        ally.Health.ModifyMaxHP(ally.Health.MaxHP + hpBonus);
+                        buffedTroops.Add(ally);
+                    }
                 }
             }
         }
@@ -84,7 +116,7 @@ namespace AdaptiveDraftArena.Abilities
             // Remove all buffs when aura source dies
             foreach (var troop in buffedTroops)
             {
-                if (troop != null && troop.IsAlive)
+                if (troop != null && troop.Health != null && troop.IsAlive)
                 {
                     troop.Health.ModifyMaxHP(troop.Health.MaxHP - hpBonus);
                 }
