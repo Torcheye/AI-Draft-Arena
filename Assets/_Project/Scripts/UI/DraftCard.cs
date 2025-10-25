@@ -245,6 +245,8 @@ namespace AdaptiveDraftArena.UI
                 return;
             }
 
+            Debug.Log("ss");
+
             OnCardClicked?.Invoke(this);
         }
 

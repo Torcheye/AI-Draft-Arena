@@ -127,20 +127,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AdaptiveDraftArena.UI.BattleUI
   battleController: {fileID: 0}
   timerText: {fileID: 7187723949124384317}
-  playerHPBar: {fileID: 0}
-  playerHPText: {fileID: 0}
-  playerLabel: {fileID: 0}
-  aiHPBar: {fileID: 0}
-  aiHPText: {fileID: 0}
-  aiLabel: {fileID: 0}
   victoryBanner: {fileID: 8995607279390831412}
   winnerText: {fileID: 6172471755531554362}
-  reasonText: {fileID: 0}
   bannerCanvasGroup: {fileID: 4033592067933636348}
   victoryText: VICTORY!
   defeatText: DEFEAT
-  eliminationText: Enemy Eliminated!
-  timerExpiredText: Time's Up!
   warningThreshold: 10
   urgentThreshold: 5
   normalColor: {r: 1, g: 1, b: 1, a: 1}
@@ -346,7 +337,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -597,7 +588,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0.5203068, b: 0, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:

@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d833ec94324fd164a9bf08739075da56, type: 3}
+  m_Name: Effect_Nature
+  m_EditorClassIdentifier: Assembly-CSharp::AdaptiveDraftArena.Modules.EffectModule
+  moduleId: NATURE
+  displayName: Nature
+  icon: {fileID: 0}
+  description: 
+  elementType: 2
+  tintColor: {r: 0.4713944, g: 0.77254903, b: 0.24313726, a: 1}
+  strongVsElement: WATER
+  weakVsElement: FIRE
+  advantageMultiplier: 1.5
+  disadvantageMultiplier: 0.75
+  auraPrefab: {fileID: 0}
