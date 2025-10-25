@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace AdaptiveDraftArena.Combat
@@ -26,19 +25,23 @@ namespace AdaptiveDraftArena.Combat
                 return null;
 
             TroopController closest = null;
-            var minDistance = float.MaxValue;
-            var myPosition = (Vector2)transform.position;
+            var minSqrDistance = float.MaxValue;
+            var myPosition = transform.position;
 
             foreach (var enemy in enemies)
             {
                 if (enemy == null || !enemy.IsAlive)
                     continue;
 
-                var distance = Vector2.Distance(myPosition, enemy.transform.position);
-                if (distance < minDistance)
+                var sqrDistance = myPosition.SqrDistanceXZ(enemy.transform.position);
+                if (sqrDistance < minSqrDistance)
                 {
-                    minDistance = distance;
+                    minSqrDistance = sqrDistance;
                     closest = enemy;
+
+                    // Early exit if essentially at same position
+                    if (sqrDistance < 0.001f)
+                        break;
                 }
             }
 
@@ -76,7 +79,16 @@ namespace AdaptiveDraftArena.Combat
             if (!troopsByTeam.ContainsKey(team))
                 return new List<TroopController>();
 
-            return troopsByTeam[team].Where(t => t != null && t.IsAlive).ToList();
+            var troops = troopsByTeam[team];
+            var result = new List<TroopController>(troops.Count);
+
+            for (var i = 0; i < troops.Count; i++)
+            {
+                if (troops[i] != null && troops[i].IsAlive)
+                    result.Add(troops[i]);
+            }
+
+            return result;
         }
 
         public static int GetAliveCount(Team team)
@@ -100,11 +112,12 @@ namespace AdaptiveDraftArena.Combat
                 return 0f;
 
             var total = 0f;
-            foreach (var troop in troopsByTeam[team])
+            var troops = troopsByTeam[team];
+            for (var i = 0; i < troops.Count; i++)
             {
-                if (troop != null && troop.IsAlive && troop.Health != null)
+                if (troops[i] != null && troops[i].IsAlive && troops[i].Health != null)
                 {
-                    total += troop.Health.CurrentHP;
+                    total += troops[i].Health.CurrentHP;
                 }
             }
             return total;
