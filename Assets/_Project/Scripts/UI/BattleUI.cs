@@ -21,24 +21,19 @@ namespace AdaptiveDraftArena.UI
         [Header("Player HP")]
         [SerializeField] private Slider playerHPBar;
         [SerializeField] private TMP_Text playerHPText;
-        [SerializeField] private TMP_Text playerLabel;
 
         [Header("AI HP")]
         [SerializeField] private Slider aiHPBar;
         [SerializeField] private TMP_Text aiHPText;
-        [SerializeField] private TMP_Text aiLabel;
 
         [Header("Victory Banner")]
         [SerializeField] private GameObject victoryBanner;
         [SerializeField] private TMP_Text winnerText;
-        [SerializeField] private TMP_Text reasonText;
         [SerializeField] private CanvasGroup bannerCanvasGroup;
 
         [Header("UI Text")]
         [SerializeField] private string victoryText = "VICTORY!";
         [SerializeField] private string defeatText = "DEFEAT";
-        [SerializeField] private string eliminationText = "Enemy Eliminated!";
-        [SerializeField] private string timerExpiredText = "Time's Up!";
 
         [Header("Timer Settings")]
         [SerializeField] private float warningThreshold = 10f;
@@ -264,12 +259,6 @@ namespace AdaptiveDraftArena.UI
             if (winnerText != null)
             {
                 winnerText.text = winner == Team.Player ? victoryText : defeatText;
-            }
-
-            // Set reason text
-            if (reasonText != null)
-            {
-                reasonText.text = timerExpired ? timerExpiredText : eliminationText;
             }
 
             // Show and animate banner
