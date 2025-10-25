@@ -243,14 +243,12 @@ BattleScreen (Full screen, initially hidden)
 │  ├─ TimerBackground (Circular badge)
 │  └─ TimerText (TMP "30" - DynaPuff Bold)
 ├─ PlayerHPPanel (Top left)
-│  ├─ PlayerLabel (TMP "PLAYER" - DynaPuff)
 │  ├─ PlayerHPBar (Slider)
 │  │  ├─ Background (rounded bar)
 │  │  ├─ Fill (blue gradient)
 │  │  └─ Handle (none)
 │  └─ PlayerHPText (TMP "24.0 HP")
 ├─ AIHPPanel (Top right)
-│  ├─ AILabel (TMP "AI" - DynaPuff)
 │  ├─ AIHPBar (Slider)
 │  │  ├─ Background (rounded bar)
 │  │  ├─ Fill (red gradient)
@@ -260,8 +258,7 @@ BattleScreen (Full screen, initially hidden)
    ├─ BannerBackground (Image - semi-transparent)
    ├─ VictoryPanel (Center panel)
    │  ├─ Decoration (Image - stars/confetti)
-   │  ├─ WinnerText (TMP "VICTORY!" - DynaPuff Bold)
-   │  └─ ReasonText (TMP "Enemy Eliminated!" - DynaPuff)
+   │  └─ WinnerText (TMP "VICTORY!" - DynaPuff Bold)
    └─ CanvasGroup (for fade animation)
 ```
 
@@ -304,12 +301,6 @@ BattleScreen (Full screen, initially hidden)
   - Color: Yellow (#FFEB3B) with white outline
   - Shadow effect
   - Alignment: Center
-
-- **ReasonText:**
-  - Font: DynaPuff Regular
-  - Font Size: 32
-  - Color: White
-  - Position: Below WinnerText
 
 ---
 
@@ -367,6 +358,7 @@ RevealPanel (Full screen)
 - [ ] `canvasGroup` → CanvasGroup on root
 
 ### BattleUI Component
+- [ ] `battleController` → BattleController in scene
 - [ ] `timerText` → TimerPanel/TimerText (TMP_Text)
 - [ ] `playerHPBar` → PlayerHPPanel/PlayerHPBar (Slider)
 - [ ] `aiHPBar` → AIHPPanel/AIHPBar (Slider)
@@ -374,8 +366,7 @@ RevealPanel (Full screen)
 - [ ] `aiHPText` → AIHPPanel/AIHPText (TMP_Text)
 - [ ] `victoryBanner` → VictoryBanner (GameObject)
 - [ ] `winnerText` → VictoryPanel/WinnerText (TMP_Text)
-- [ ] `reasonText` → VictoryPanel/ReasonText (TMP_Text)
-- [ ] `canvasGroup` → VictoryBanner/CanvasGroup
+- [ ] `bannerCanvasGroup` → VictoryBanner/CanvasGroup
 
 ---
 
