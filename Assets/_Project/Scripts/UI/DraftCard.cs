@@ -127,7 +127,7 @@ namespace AdaptiveDraftArena.UI
             if (effectIcon != null && combination.effect != null)
             {
                 effectIcon.sprite = combination.effect.icon;
-                effectIcon.color = combination.effect.color;
+                effectIcon.color = combination.effect.tintColor;
             }
 
             // Set text elements using SetText to reduce allocations
@@ -154,7 +154,7 @@ namespace AdaptiveDraftArena.UI
             // Tint card background based on element color (cached for performance)
             if (cardBackground != null && combination.effect != null)
             {
-                cardBackground.color = GetCachedTint(combination.effect.color);
+                cardBackground.color = GetCachedTint(combination.effect.tintColor);
             }
         }
 

@@ -229,7 +229,7 @@ namespace AdaptiveDraftArena.UI
             // Update prompt text
             if (promptText != null)
             {
-                promptText.SetText("Selected: {0}", selected.DisplayName);
+                promptText.text = $"Selected: {selected.DisplayName}";
             }
 
             Debug.Log($"DraftUI: Player selected {selected.DisplayName}");
