@@ -60,5 +60,13 @@ namespace AdaptiveDraftArena.Match
             else
                 AIWins++;
         }
+
+        public List<TroopCombination> GetFullDraftPool()
+        {
+            var pool = new List<TroopCombination>();
+            pool.AddRange(BaseCombinations);
+            pool.AddRange(AIGeneratedCombinations);
+            return pool;
+        }
     }
 }

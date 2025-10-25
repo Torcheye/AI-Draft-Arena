@@ -4,11 +4,19 @@ using UnityEngine;
 using Cysharp.Threading.Tasks;
 using AdaptiveDraftArena.Core;
 using AdaptiveDraftArena.Modules;
+using AdaptiveDraftArena.Draft;
+using AdaptiveDraftArena.Battle;
+using AdaptiveDraftArena.Combat;
 
 namespace AdaptiveDraftArena.Match
 {
     public class MatchController : MonoBehaviour
     {
+        [Header("Controllers")]
+        [SerializeField] private DraftController draftController;
+        [SerializeField] private BattleController battleController;
+        [SerializeField] private TroopSpawner troopSpawner;
+
         public MatchState State { get; private set; }
         public MatchPhase CurrentPhase => State?.CurrentPhase ?? MatchPhase.MatchStart;
 
@@ -39,6 +47,40 @@ namespace AdaptiveDraftArena.Match
                 Debug.LogError("GameConfig is null in GameManager! Disabling MatchController.");
                 enabled = false;
                 return;
+            }
+
+            // Validate controller references
+            if (draftController == null)
+            {
+                draftController = GetComponent<DraftController>();
+                if (draftController == null)
+                {
+                    Debug.LogError("DraftController not found! Please assign in Inspector or add component.");
+                    enabled = false;
+                    return;
+                }
+            }
+
+            if (battleController == null)
+            {
+                battleController = GetComponent<BattleController>();
+                if (battleController == null)
+                {
+                    Debug.LogError("BattleController not found! Please assign in Inspector or add component.");
+                    enabled = false;
+                    return;
+                }
+            }
+
+            if (troopSpawner == null)
+            {
+                troopSpawner = GetComponent<TroopSpawner>();
+                if (troopSpawner == null)
+                {
+                    Debug.LogError("TroopSpawner not found! Please assign in Inspector or add component.");
+                    enabled = false;
+                    return;
+                }
             }
 
             Debug.Log("MatchController initialized successfully");
@@ -141,11 +183,12 @@ namespace AdaptiveDraftArena.Match
             ChangePhase(MatchPhase.Draft);
             Debug.Log("Draft phase started");
 
-            // TODO: Implement draft logic
-            // For now, just wait for draft duration
-            await UniTask.Delay(TimeSpan.FromSeconds(config.draftDuration), cancellationToken: cancellationToken);
+            var (playerPick, aiPick) = await draftController.StartDraftAsync(State, cancellationToken);
 
-            Debug.Log("Draft phase ended");
+            State.PlayerSelectedCombo = playerPick;
+            State.AISelectedCombo = aiPick;
+
+            Debug.Log($"Draft phase ended - Player: {playerPick?.DisplayName} | AI: {aiPick?.DisplayName}");
         }
 
         private async UniTask RunSpawnPhase(CancellationToken cancellationToken)
@@ -153,8 +196,30 @@ namespace AdaptiveDraftArena.Match
             ChangePhase(MatchPhase.Spawn);
             Debug.Log("Spawn phase started");
 
-            // TODO: Implement spawn logic
-            // For now, just wait 1 second
+            // Clear any remaining troops from previous round
+            TargetingSystem.ClearAll();
+
+            // Spawn player troops
+            if (State.PlayerSelectedCombo != null)
+            {
+                troopSpawner.SpawnTroops(State.PlayerSelectedCombo, Team.Player);
+            }
+            else
+            {
+                Debug.LogWarning("Player selected combo is null! Skipping player spawn.");
+            }
+
+            // Spawn AI troops
+            if (State.AISelectedCombo != null)
+            {
+                troopSpawner.SpawnTroops(State.AISelectedCombo, Team.AI);
+            }
+            else
+            {
+                Debug.LogWarning("AI selected combo is null! Skipping AI spawn.");
+            }
+
+            // Brief pause to show formations
             await UniTask.Delay(TimeSpan.FromSeconds(1), cancellationToken: cancellationToken);
 
             Debug.Log("Spawn phase ended");
@@ -165,11 +230,20 @@ namespace AdaptiveDraftArena.Match
             ChangePhase(MatchPhase.Battle);
             Debug.Log("Battle phase started");
 
-            // TODO: Implement battle logic
-            // For now, just wait for battle duration
-            await UniTask.Delay(TimeSpan.FromSeconds(config.battleDuration), cancellationToken: cancellationToken);
+            var (winner, timerExpired, playerHP, aiHP) = await battleController.StartBattleAsync(cancellationToken);
 
-            Debug.Log("Battle phase ended");
+            // Store battle result in state for RoundEnd phase
+            State.RoundHistory.Add(new RoundResult
+            {
+                RoundNumber = State.CurrentRound,
+                Winner = winner,
+                PlayerHP = (int)playerHP,
+                AIHP = (int)aiHP,
+                TimerExpired = timerExpired,
+                BattleDuration = config.battleDuration - battleController.BattleTimeRemaining
+            });
+
+            Debug.Log($"Battle phase ended - Winner: {winner} | Method: {(timerExpired ? "HP Comparison" : "Elimination")}");
         }
 
         private async UniTask RunRoundEndPhase(CancellationToken cancellationToken)
@@ -177,23 +251,16 @@ namespace AdaptiveDraftArena.Match
             ChangePhase(MatchPhase.RoundEnd);
             Debug.Log("Round end phase started");
 
-            // TODO: Determine winner, update scores
-            // For now, randomly award round
-            var roundWinner = UnityEngine.Random.value > 0.5f ? Team.Player : Team.AI;
-            State.AwardRoundWin(roundWinner);
+            // Get the latest round result
+            var roundResult = State.RoundHistory[State.RoundHistory.Count - 1];
 
-            var roundResult = new RoundResult
-            {
-                RoundNumber = State.CurrentRound,
-                Winner = roundWinner,
-                TimerExpired = true,
-                BattleDuration = config.battleDuration
-            };
+            // Award the win
+            State.AwardRoundWin(roundResult.Winner);
 
-            State.RoundHistory.Add(roundResult);
+            // Emit round ended event
             OnRoundEnded?.Invoke(roundResult);
 
-            Debug.Log($"Round {State.CurrentRound} winner: {roundWinner}");
+            Debug.Log($"Round {State.CurrentRound} winner: {roundResult.Winner}");
             Debug.Log($"Score - Player: {State.PlayerWins}, AI: {State.AIWins}");
 
             // TODO: AI generation would happen here

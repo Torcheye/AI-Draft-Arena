@@ -78,5 +78,36 @@ namespace AdaptiveDraftArena.Combat
 
             return troopsByTeam[team].Where(t => t != null && t.IsAlive).ToList();
         }
+
+        public static int GetAliveCount(Team team)
+        {
+            if (!troopsByTeam.ContainsKey(team))
+                return 0;
+
+            var count = 0;
+            var troops = troopsByTeam[team];
+            for (var i = 0; i < troops.Count; i++)
+            {
+                if (troops[i] != null && troops[i].IsAlive)
+                    count++;
+            }
+            return count;
+        }
+
+        public static float GetTotalHP(Team team)
+        {
+            if (!troopsByTeam.ContainsKey(team))
+                return 0f;
+
+            var total = 0f;
+            foreach (var troop in troopsByTeam[team])
+            {
+                if (troop != null && troop.IsAlive && troop.Health != null)
+                {
+                    total += troop.Health.CurrentHP;
+                }
+            }
+            return total;
+        }
     }
 }
