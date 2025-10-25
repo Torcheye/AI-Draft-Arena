@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using AdaptiveDraftArena.Core;
 using AdaptiveDraftArena.Modules;
+using AdaptiveDraftArena.Battle;
 
 namespace AdaptiveDraftArena.Combat
 {
@@ -12,6 +13,7 @@ namespace AdaptiveDraftArena.Combat
 
         [Header("Configuration")]
         private GameConfig config;
+        private BattlefieldBounds cachedBattlefieldBounds;
 
         private static readonly List<TroopController> EmptyList = new List<TroopController>(0);
 
@@ -22,6 +24,24 @@ namespace AdaptiveDraftArena.Combat
                 config = GameManager.Instance.Config;
             }
             return config;
+        }
+
+        private BattlefieldBounds GetBattlefieldBounds()
+        {
+            if (cachedBattlefieldBounds == null)
+            {
+                #if UNITY_2023_1_OR_NEWER
+                cachedBattlefieldBounds = FindFirstObjectByType<BattlefieldBounds>();
+                #else
+                cachedBattlefieldBounds = FindObjectOfType<BattlefieldBounds>();
+                #endif
+
+                if (cachedBattlefieldBounds == null)
+                {
+                    Debug.LogWarning("TroopSpawner: BattlefieldBounds not found in scene. Using deprecated spawn zones from GameConfig.");
+                }
+            }
+            return cachedBattlefieldBounds;
         }
 
         public List<TroopController> SpawnTroops(TroopCombination combination, Team team, Transform parent = null)
@@ -46,13 +66,31 @@ namespace AdaptiveDraftArena.Combat
             }
 
             var spawnedTroops = new List<TroopController>(combination.amount);
-            var spawnCenter = team == Team.Player ? cfg.playerSpawnCenter : cfg.aiSpawnCenter;
-            var spawnSize = team == Team.Player ? cfg.playerSpawnSize : cfg.aiSpawnSize;
+            var battlefieldBounds = GetBattlefieldBounds();
 
             // Spawn the specified amount of troops
             for (int i = 0; i < combination.amount; i++)
             {
-                var spawnPos = GetRandomPositionInZone(spawnCenter, spawnSize, cfg.groundLevel);
+                Vector3 spawnPos;
+
+                if (battlefieldBounds != null)
+                {
+                    // Use BattlefieldBounds for spawn position
+                    var bounds = team == Team.Player
+                        ? battlefieldBounds.GetPlayerSpawnBounds()
+                        : battlefieldBounds.GetAISpawnBounds();
+                    spawnPos = battlefieldBounds.GetRandomPositionInBounds(bounds, cfg.groundLevel);
+                }
+                else
+                {
+                    // Fallback to deprecated config values
+                    #pragma warning disable CS0618 // Suppress obsolete warnings
+                    var spawnCenter = team == Team.Player ? cfg.playerSpawnCenter : cfg.aiSpawnCenter;
+                    var spawnSize = team == Team.Player ? cfg.playerSpawnSize : cfg.aiSpawnSize;
+                    spawnPos = GetRandomPositionInZone(spawnCenter, spawnSize, cfg.groundLevel);
+                    #pragma warning restore CS0618
+                }
+
                 var troop = SpawnSingleTroop(combination, team, spawnPos, parent);
 
                 if (troop != null)

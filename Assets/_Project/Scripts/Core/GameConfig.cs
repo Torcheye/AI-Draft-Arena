@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace AdaptiveDraftArena.Core
@@ -19,13 +20,18 @@ namespace AdaptiveDraftArena.Core
         public Vector3 battlefieldSize = new Vector3(20f, 0f, 12f); // Width, Y(locked to groundLevel), Depth
         public float groundLevel = 0f;
 
-        [Header("Spawn Zones")]
-        // Player spawn zone: center and size for 3D bounds
+        [Header("Battlefield")]
+        public GameObject battlefieldPrefab;
+
+        [Header("Spawn Zones (Deprecated - Use Battlefield Prefab)")]
+        [Obsolete("Use battlefieldPrefab instead")]
         public Vector3 playerSpawnCenter = new Vector3(3.5f, 0f, 6f);
+        [Obsolete("Use battlefieldPrefab instead")]
         public Vector3 playerSpawnSize = new Vector3(3f, 0f, 6f);
 
-        // AI spawn zone: center and size for 3D bounds
+        [Obsolete("Use battlefieldPrefab instead")]
         public Vector3 aiSpawnCenter = new Vector3(16.5f, 0f, 6f);
+        [Obsolete("Use battlefieldPrefab instead")]
         public Vector3 aiSpawnSize = new Vector3(3f, 0f, 6f);
 
         [Header("Amount Multipliers")]
@@ -45,9 +51,29 @@ namespace AdaptiveDraftArena.Core
         public float deathFadeDuration = 0.5f;
         public float screenShakeIntensity = 0.2f;
 
+        /// <summary>
+        /// Validates that the battlefield prefab has the required BattlefieldBounds component.
+        /// </summary>
+        /// <returns>True if battlefield prefab is valid, false otherwise</returns>
+        public bool ValidateBattlefieldPrefab()
+        {
+            if (battlefieldPrefab == null)
+            {
+                return false;
+            }
+            return battlefieldPrefab.GetComponent<Battle.BattlefieldBounds>() != null;
+        }
+
         private void OnValidate()
         {
-            // Ensure Y components are locked to ground level
+            // Check if battlefield prefab is assigned
+            if (battlefieldPrefab != null && !ValidateBattlefieldPrefab())
+            {
+                Debug.LogWarning("GameConfig: Battlefield prefab is assigned but missing BattlefieldBounds component!");
+            }
+
+            #pragma warning disable CS0618 // Suppress obsolete warnings for deprecated fields
+            // Ensure Y components are locked to ground level (for deprecated fields)
             playerSpawnCenter.y = groundLevel;
             aiSpawnCenter.y = groundLevel;
             playerSpawnSize.y = 0f;
@@ -59,6 +85,7 @@ namespace AdaptiveDraftArena.Core
             playerSpawnSize.z = Mathf.Max(0.1f, playerSpawnSize.z);
             aiSpawnSize.x = Mathf.Max(0.1f, aiSpawnSize.x);
             aiSpawnSize.z = Mathf.Max(0.1f, aiSpawnSize.z);
+            #pragma warning restore CS0618
 
             // Ensure battlefield dimensions are valid
             battlefieldSize.x = Mathf.Max(1f, battlefieldSize.x);

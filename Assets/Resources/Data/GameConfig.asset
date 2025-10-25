@@ -18,19 +18,13 @@ MonoBehaviour:
   draftOptionsCount: 3
   battleDuration: 30
   maxTroopsPerSide: 4
-  battlefieldSize: {x: 20, y: 12}
-  playerSpawnZone:
-    serializedVersion: 2
-    x: 2
-    y: 3
-    width: 3
-    height: 6
-  aiSpawnZone:
-    serializedVersion: 2
-    x: 15
-    y: 3
-    width: 3
-    height: 6
+  battlefieldSize: {x: 20, y: 0, z: 12}
+  groundLevel: 0
+  battlefieldPrefab: {fileID: 455251788109651930, guid: b87b847968f39b34f8ecf11fca6605fe, type: 3}
+  playerSpawnCenter: {x: 3.5, y: 0, z: 6}
+  playerSpawnSize: {x: 3, y: 0, z: 6}
+  aiSpawnCenter: {x: 16.5, y: 0, z: 6}
+  aiSpawnSize: {x: 3, y: 0, z: 6}
   statMultipliers:
   - 1
   - 0.8
