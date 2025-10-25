@@ -15,16 +15,13 @@ namespace AdaptiveDraftArena.Combat
 
         private static readonly List<TroopController> EmptyList = new List<TroopController>(0);
 
-        private void Awake()
+        private GameConfig GetConfig()
         {
-            if (GameManager.Instance != null)
+            if (config == null && GameManager.Instance != null)
             {
                 config = GameManager.Instance.Config;
             }
-            else
-            {
-                Debug.LogError("TroopSpawner: GameManager.Instance is null!");
-            }
+            return config;
         }
 
         public List<TroopController> SpawnTroops(TroopCombination combination, Team team, Transform parent = null)
@@ -41,20 +38,21 @@ namespace AdaptiveDraftArena.Combat
                 return EmptyList;
             }
 
-            if (config == null)
+            var cfg = GetConfig();
+            if (cfg == null)
             {
                 Debug.LogError("TroopSpawner: Config is null! Cannot spawn troops.");
                 return EmptyList;
             }
 
             var spawnedTroops = new List<TroopController>(combination.amount);
-            var spawnCenter = team == Team.Player ? config.playerSpawnCenter : config.aiSpawnCenter;
-            var spawnSize = team == Team.Player ? config.playerSpawnSize : config.aiSpawnSize;
+            var spawnCenter = team == Team.Player ? cfg.playerSpawnCenter : cfg.aiSpawnCenter;
+            var spawnSize = team == Team.Player ? cfg.playerSpawnSize : cfg.aiSpawnSize;
 
             // Spawn the specified amount of troops
             for (int i = 0; i < combination.amount; i++)
             {
-                var spawnPos = GetRandomPositionInZone(spawnCenter, spawnSize, config.groundLevel);
+                var spawnPos = GetRandomPositionInZone(spawnCenter, spawnSize, cfg.groundLevel);
                 var troop = SpawnSingleTroop(combination, team, spawnPos, parent);
 
                 if (troop != null)
