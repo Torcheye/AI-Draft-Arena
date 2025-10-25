@@ -46,7 +46,7 @@ namespace AdaptiveDraftArena.Combat
             if (AbilityExecutor == null) AbilityExecutor = gameObject.AddComponent<AbilityExecutor>();
         }
 
-        public void Initialize(TroopCombination combination, Team team, Vector2 spawnPosition)
+        public void Initialize(TroopCombination combination, Team team, Vector3 spawnPosition)
         {
             if (isInitialized)
             {
