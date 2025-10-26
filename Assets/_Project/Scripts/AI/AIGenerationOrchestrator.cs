@@ -40,12 +40,17 @@ namespace AdaptiveDraftArena.AI
         /// <summary>
         /// Generates a counter combination based on player patterns.
         /// Phase 1: Uses base combinations pool only, no delay.
+        /// Phase 3: Passes current round for progressive difficulty.
+        /// FIXED: Uses RoundHistory.Count + 1 for unambiguous round tracking.
         /// </summary>
         public async UniTask<TroopCombination> GenerateCounterAsync(
             MatchState state,
             CancellationToken ct)
         {
-            Debug.Log("[AIGenerationOrchestrator] Generating counter...");
+            // The round being drafted is always: completed rounds + 1
+            // This is unambiguous - RoundHistory only contains completed rounds
+            int roundBeingDrafted = state.RoundHistory.Count + 1;
+            Debug.Log($"[AIGenerationOrchestrator] Generating counter for Round {roundBeingDrafted} ({state.RoundHistory.Count} rounds completed)");
 
             // Step 1: Analyze player patterns
             var profile = analyzer.AnalyzePlayer(state);
@@ -60,15 +65,15 @@ namespace AdaptiveDraftArena.AI
                 return null;
             }
 
-            // Step 3: Generate counter
-            var counter = engine.GenerateCounter(profile, availableCombos);
+            // Step 3: Generate counter (Phase 3: pass round number for difficulty scaling)
+            var counter = engine.GenerateCounter(profile, availableCombos, roundBeingDrafted);
 
             // Phase 1: No delay, instant return
             // Phase 4 will add "thinking" delay here
 
             if (counter != null)
             {
-                Debug.Log($"[AIGenerationOrchestrator] Generated: {counter.DisplayName}");
+                Debug.Log($"[AIGenerationOrchestrator] Generated for Round {roundBeingDrafted}: {counter.DisplayName}");
             }
 
             return counter;

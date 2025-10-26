@@ -7,8 +7,21 @@ using UnityEngine;
 namespace AdaptiveDraftArena.AI
 {
     /// <summary>
+    /// Difficulty levels for progressive AI adaptation.
+    /// Phase 3: AI gets smarter as rounds progress.
+    /// </summary>
+    public enum DifficultyLevel
+    {
+        Exploration,    // Rounds 1-2: Simple counters, test player
+        Adaptation,     // Rounds 3-5: Strategic counters, exploit patterns
+        Mastery         // Rounds 6-7: Sophisticated counters, complex synergies
+    }
+
+    /// <summary>
     /// Scores troop combinations and selects counters to player strategy.
     /// Phase 1: Simple element-based scoring only.
+    /// Phase 2: Multi-layer scoring (5 factors).
+    /// Phase 3: Progressive difficulty based on round number.
     /// </summary>
     public class CounterStrategyEngine
     {
@@ -23,16 +36,102 @@ namespace AdaptiveDraftArena.AI
         /// Generates a counter combination based on player profile.
         /// Phase 1: Picks from available combos using element advantage only.
         /// Phase 2: Builds dynamic combos OR picks from pool (whichever scores higher).
+        /// Phase 3: Uses difficulty-based strategies (Exploration → Adaptation → Mastery).
         /// </summary>
         public TroopCombination GenerateCounter(
             PlayerProfile profile,
-            List<TroopCombination> availableCombos)
+            List<TroopCombination> availableCombos,
+            int currentRound = 1)
         {
             if (availableCombos == null || availableCombos.Count == 0)
             {
                 Debug.LogError("[CounterStrategyEngine] No available combos to choose from!");
                 return null;
             }
+
+            // Phase 3: Use difficulty-based generation strategy
+            var difficulty = GetDifficultyLevel(currentRound);
+            Debug.Log($"[CounterStrategyEngine] Round {currentRound} - Difficulty: {difficulty}");
+
+            switch (difficulty)
+            {
+                case DifficultyLevel.Exploration:
+                    return GenerateExplorationCounter(profile, availableCombos);
+
+                case DifficultyLevel.Adaptation:
+                    return GenerateAdaptiveCounter(profile, availableCombos);
+
+                case DifficultyLevel.Mastery:
+                    return GenerateMasteryCounter(profile, availableCombos);
+
+                default:
+                    return GenerateAdaptiveCounter(profile, availableCombos);
+            }
+        }
+
+        /// <summary>
+        /// Determines AI difficulty level based on current round.
+        /// Rounds 1-2: Exploration, Rounds 3-5: Adaptation, Rounds 6-7: Mastery
+        /// </summary>
+        private DifficultyLevel GetDifficultyLevel(int roundNumber)
+        {
+            if (roundNumber <= 2)
+                return DifficultyLevel.Exploration;
+            if (roundNumber <= 5)
+                return DifficultyLevel.Adaptation;
+            return DifficultyLevel.Mastery;
+        }
+
+        /// <summary>
+        /// Exploration phase (Rounds 1-2): Simple, readable counters to test player.
+        /// Uses only element advantage for easy-to-understand AI behavior.
+        /// </summary>
+        private TroopCombination GenerateExplorationCounter(
+            PlayerProfile profile,
+            List<TroopCombination> availableCombos)
+        {
+            Debug.Log("[CounterStrategyEngine] Exploration mode: Simple element counter");
+
+            // Score using only element advantage (Phase 1 behavior)
+            var scoredCombos = new List<(TroopCombination combo, int score)>();
+
+            foreach (var combo in availableCombos)
+            {
+                if (combo == null || combo.effect == null)
+                    continue;
+
+                // Simple element counter only
+                int score = CountersElement(combo, profile) ? 50 : 0;
+                scoredCombos.Add((combo, score));
+            }
+
+            if (scoredCombos.Count == 0)
+            {
+                Debug.LogWarning("[CounterStrategyEngine] No valid combos for Exploration");
+                return null;
+            }
+
+            // Find best
+            var best = scoredCombos[0];
+            for (int i = 1; i < scoredCombos.Count; i++)
+            {
+                if (scoredCombos[i].score > best.score)
+                    best = scoredCombos[i];
+            }
+
+            Debug.Log($"[CounterStrategyEngine] Exploration picked: {best.combo.DisplayName} (Score: {best.score})");
+            return best.combo;
+        }
+
+        /// <summary>
+        /// Adaptation phase (Rounds 3-5): Multi-factor counters based on confirmed patterns.
+        /// Uses full 5-layer scoring system (Phase 2 behavior).
+        /// </summary>
+        private TroopCombination GenerateAdaptiveCounter(
+            PlayerProfile profile,
+            List<TroopCombination> availableCombos)
+        {
+            Debug.Log("[CounterStrategyEngine] Adaptation mode: Multi-factor strategic counter");
 
             // Phase 2: Try building a dynamic combo
             TroopCombination dynamicCombo = null;
@@ -91,14 +190,86 @@ namespace AdaptiveDraftArena.AI
             // Compare dynamic vs pool and pick best
             if (dynamicCombo != null && dynamicScore > bestPoolCombo.score)
             {
-                Debug.Log($"[CounterStrategyEngine] Selected DYNAMIC combo {dynamicCombo.DisplayName} (Score: {dynamicScore})");
+                Debug.Log($"[CounterStrategyEngine] Adaptation selected DYNAMIC combo {dynamicCombo.DisplayName} (Score: {dynamicScore})");
                 return dynamicCombo;
             }
             else
             {
-                Debug.Log($"[CounterStrategyEngine] Selected POOL combo {bestPoolCombo.combo.DisplayName} (Score: {bestPoolCombo.score})");
+                Debug.Log($"[CounterStrategyEngine] Adaptation selected POOL combo {bestPoolCombo.combo.DisplayName} (Score: {bestPoolCombo.score})");
                 return bestPoolCombo.combo;
             }
+        }
+
+        /// <summary>
+        /// Mastery phase (Rounds 6-7): Sophisticated counters using win/loss history.
+        /// Analyzes what worked against player before and generates hard counters.
+        /// FIXED: Added null validation for lastSuccessful counter.
+        /// </summary>
+        private TroopCombination GenerateMasteryCounter(
+            PlayerProfile profile,
+            List<TroopCombination> availableCombos)
+        {
+            Debug.Log("[CounterStrategyEngine] Mastery mode: Sophisticated counter using history");
+
+            // Check if we have successful counter history
+            if (profile.successfulCounters != null && profile.successfulCounters.Count > 0)
+            {
+                Debug.Log($"[CounterStrategyEngine] Found {profile.successfulCounters.Count} successful counters in history");
+
+                // Try to find similar combos to what worked before
+                var lastSuccessful = profile.successfulCounters[profile.successfulCounters.Count - 1];
+
+                // Validate lastSuccessful is not null and has required modules
+                if (lastSuccessful == null || lastSuccessful.effect == null || lastSuccessful.body == null)
+                {
+                    Debug.LogWarning("[CounterStrategyEngine] Last successful counter is invalid (null modules), falling back to Adaptation");
+                    return GenerateAdaptiveCounter(profile, availableCombos);
+                }
+
+                // Look for combos with similar characteristics (same element, body role, or amount)
+                var similarCombos = new List<(TroopCombination combo, int similarityScore)>();
+
+                foreach (var combo in availableCombos)
+                {
+                    if (combo == null || combo.effect == null || combo.body == null)
+                        continue;
+
+                    int similarity = 0;
+
+                    // Same element = +3
+                    if (combo.effect.moduleId == lastSuccessful.effect?.moduleId)
+                        similarity += 3;
+
+                    // Same body role = +2
+                    if (combo.body.role == lastSuccessful.body?.role)
+                        similarity += 2;
+
+                    // Similar amount (within 1) = +1
+                    if (System.Math.Abs(combo.amount - lastSuccessful.amount) <= 1)
+                        similarity += 1;
+
+                    if (similarity > 0)
+                        similarCombos.Add((combo, similarity));
+                }
+
+                // If we found similar combos, pick the most similar one
+                if (similarCombos.Count > 0)
+                {
+                    var mostSimilar = similarCombos[0];
+                    for (int i = 1; i < similarCombos.Count; i++)
+                    {
+                        if (similarCombos[i].similarityScore > mostSimilar.similarityScore)
+                            mostSimilar = similarCombos[i];
+                    }
+
+                    Debug.Log($"[CounterStrategyEngine] Mastery selected similar combo: {mostSimilar.combo.DisplayName} (Similarity: {mostSimilar.similarityScore})");
+                    return mostSimilar.combo;
+                }
+            }
+
+            // Fallback: Use Adaptation strategy (full 5-layer scoring)
+            Debug.Log("[CounterStrategyEngine] Mastery fallback to Adaptation strategy");
+            return GenerateAdaptiveCounter(profile, availableCombos);
         }
 
         /// <summary>

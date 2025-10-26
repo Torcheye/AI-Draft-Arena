@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using AdaptiveDraftArena.Match;
+using AdaptiveDraftArena.Modules;
 using UnityEngine;
 
 namespace AdaptiveDraftArena.AI
@@ -15,6 +16,7 @@ namespace AdaptiveDraftArena.AI
         /// Analyzes player pick history and returns a profile.
         /// Phase 1: Element tracking and stat averages.
         /// Phase 2: Module tracking (body, weapon, ability) and range/speed.
+        /// Phase 3: Win/loss tracking for progressive difficulty.
         /// </summary>
         public PlayerProfile AnalyzePlayer(MatchState state)
         {
@@ -133,9 +135,83 @@ namespace AdaptiveDraftArena.AI
                 profile.recentPicks.Add(state.PlayerPickHistory[i]);
             }
 
-            Debug.Log($"[PlayerAnalyzer] Profile: Element={profile.mostUsedElement}, AvgAmount={profile.avgAmount:F1}, AvgHP={profile.avgHP:F1}, AvgDMG={profile.avgDamage:F1}, AvgRange={profile.avgRange:F1}, AvgSpeed={profile.avgSpeed:F1}");
+            // Phase 3: Analyze round outcomes for win/loss tracking
+            AnalyzeRoundOutcomes(state, profile);
+
+            Debug.Log($"[PlayerAnalyzer] Profile: Element={profile.mostUsedElement}, AvgAmount={profile.avgAmount:F1}, AvgHP={profile.avgHP:F1}, AvgDMG={profile.avgDamage:F1}, AvgRange={profile.avgRange:F1}, AvgSpeed={profile.avgSpeed:F1}, Wins={profile.winningPicks.Count}, Losses={profile.losingPicks.Count}");
 
             return profile;
+        }
+
+        /// <summary>
+        /// Analyzes round history to track winning picks, losing picks, and successful AI counters.
+        /// Phase 3: Used for Mastery difficulty to learn from past rounds.
+        /// FIXED: Uses round numbers to prevent index misalignment and duplicate analysis.
+        /// </summary>
+        private void AnalyzeRoundOutcomes(MatchState state, PlayerProfile profile)
+        {
+            // Need at least one completed round to analyze
+            if (state.RoundHistory == null || state.RoundHistory.Count == 0)
+            {
+                Debug.Log("[PlayerAnalyzer] No round history yet for outcome analysis");
+                return;
+            }
+
+            // Validate data integrity
+            if (state.RoundHistory.Count > state.PlayerPickHistory.Count)
+            {
+                Debug.LogError($"[PlayerAnalyzer] Data integrity error: RoundHistory count ({state.RoundHistory.Count}) exceeds PlayerPickHistory count ({state.PlayerPickHistory.Count})!");
+                return;
+            }
+
+            // Analyze each completed round
+            for (int i = 0; i < state.RoundHistory.Count; i++)
+            {
+                var round = state.RoundHistory[i];
+
+                // Skip if already analyzed (prevents double-counting if AnalyzePlayer called multiple times)
+                if (profile.analyzedRounds.Contains(round.RoundNumber))
+                    continue;
+
+                // Mark as analyzed
+                profile.analyzedRounds.Add(round.RoundNumber);
+
+                // The pick for this round is at index (round.RoundNumber - 1)
+                // RoundNumbers are 1-indexed, arrays are 0-indexed
+                int pickIndex = round.RoundNumber - 1;
+
+                if (pickIndex < 0 || pickIndex >= state.PlayerPickHistory.Count)
+                {
+                    Debug.LogWarning($"[PlayerAnalyzer] Invalid pickIndex {pickIndex} for round {round.RoundNumber}");
+                    continue;
+                }
+
+                TroopCombination playerPick = state.PlayerPickHistory[pickIndex];
+                TroopCombination aiPick = pickIndex < state.AIPickHistory.Count ? state.AIPickHistory[pickIndex] : null;
+
+                if (playerPick == null)
+                    continue; // Skip if we don't have player pick data
+
+                // Categorize based on round outcome
+                if (round.Winner == Team.Player)
+                {
+                    profile.winningPicks.Add(playerPick);
+                    Debug.Log($"[PlayerAnalyzer] Round {round.RoundNumber}: Player won with {playerPick.DisplayName}");
+                }
+                else // AI won
+                {
+                    profile.losingPicks.Add(playerPick);
+
+                    // Track successful AI counter
+                    if (aiPick != null)
+                    {
+                        profile.successfulCounters.Add(aiPick);
+                        Debug.Log($"[PlayerAnalyzer] Round {round.RoundNumber}: AI won with {aiPick.DisplayName} (counter to {playerPick.DisplayName})");
+                    }
+                }
+            }
+
+            Debug.Log($"[PlayerAnalyzer] Outcome analysis complete: {profile.winningPicks.Count} wins, {profile.losingPicks.Count} losses, {profile.successfulCounters.Count} successful counters");
         }
     }
 }

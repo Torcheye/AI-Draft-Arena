@@ -8,6 +8,7 @@ namespace AdaptiveDraftArena.AI
     /// Stores analyzed player behavior patterns for counter-generation.
     /// Phase 1: Simple element tracking and stat averages.
     /// Phase 2: Multi-factor tracking (body, weapon, ability, range, speed).
+    /// Phase 3: Win/loss tracking for adaptive difficulty.
     /// </summary>
     public class PlayerProfile
     {
@@ -31,6 +32,14 @@ namespace AdaptiveDraftArena.AI
 
         // Recent picks (last 3)
         public List<TroopCombination> recentPicks = new List<TroopCombination>();
+
+        // Phase 3: Win/Loss tracking for Mastery difficulty
+        public List<TroopCombination> winningPicks = new List<TroopCombination>();      // Player picks that won
+        public List<TroopCombination> losingPicks = new List<TroopCombination>();       // Player picks that lost
+        public List<TroopCombination> successfulCounters = new List<TroopCombination>(); // AI picks that beat player
+
+        // Track which rounds have been analyzed to prevent double-counting
+        internal HashSet<int> analyzedRounds = new HashSet<int>();
 
         /// <summary>
         /// Returns the element that counters the player's most-used element.
