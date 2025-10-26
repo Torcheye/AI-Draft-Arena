@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using AdaptiveDraftArena.Modules;
 using UnityEngine;
 
 namespace AdaptiveDraftArena.Core
@@ -13,6 +15,12 @@ namespace AdaptiveDraftArena.Core
         [Header("Draft Settings")]
         public float draftDuration = 15f;
         public int draftOptionsCount = 3;
+
+        [Header("Module Pools (for AI Generation)")]
+        public List<BodyModule> Bodies = new List<BodyModule>();
+        public List<WeaponModule> Weapons = new List<WeaponModule>();
+        public List<AbilityModule> Abilities = new List<AbilityModule>();
+        public List<EffectModule> Effects = new List<EffectModule>();
 
         [Header("Battle Settings")]
         public float battleDuration = 30f;
