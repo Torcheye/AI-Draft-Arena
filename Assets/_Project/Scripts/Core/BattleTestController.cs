@@ -24,10 +24,10 @@ namespace AdaptiveDraftArena.Core
 
         private void Start()
         {
-            if (spawnOnStart)
-            {
-                SpawnTestTroops();
-            }
+            // if (spawnOnStart)
+            // {
+            //     SpawnTestTroops();
+            // }
             
             var matchController = GetComponent<MatchController>();
             matchController.StartMatchAsync().Forget();
@@ -36,11 +36,11 @@ namespace AdaptiveDraftArena.Core
         private void Update()
         {
             // Press Space to respawn troops for testing
-            if (Input.GetKeyDown(respawnKey))
-            {
-                CleanupExistingTroops();
-                SpawnTestTroops();
-            }
+            // if (Input.GetKeyDown(respawnKey))
+            // {
+            //     CleanupExistingTroops();
+            //     SpawnTestTroops();
+            // }
         }
 
         public void SpawnTestTroops()

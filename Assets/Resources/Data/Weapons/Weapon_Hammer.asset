@@ -16,12 +16,12 @@ MonoBehaviour:
   displayName: Hammer
   icon: {fileID: 4301844918096825189, guid: 6b23fdafe38222f4da01c0e0c7887de7, type: 3}
   description: 
-  baseDamage: 8
+  baseDamage: 6
   attackCooldown: 1.5
   attackType: 0
   projectilePrefab: {fileID: 0}
   projectileSpeed: 10
-  aoeRadius: 0
+  aoeRadius: 5
   weaponModelPrefab: {fileID: 8097238424323401368, guid: 03022040e665c3c41a1da376c27d2274, type: 3}
   modelOffset: {x: 0, y: 0, z: 0}
   modelRotation: {x: 0, y: 0, z: 0}

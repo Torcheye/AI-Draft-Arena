@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AdaptiveDraftArena.Modules.EffectModule
   moduleId: WATER
   displayName: Water
-  icon: {fileID: 0}
+  icon: {fileID: -9069869967062415903, guid: bfbc772bd48c1ab4885a3d7bf0c10d87, type: 3}
   description: 
   elementType: 1
   tintColor: {r: 0, g: 0.7058824, b: 0.84705883, a: 1}

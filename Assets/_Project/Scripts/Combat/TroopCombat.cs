@@ -102,15 +102,11 @@ namespace AdaptiveDraftArena.Combat
                     break;
 
                 case AttackType.Projectile:
-                    // TODO: Spawn projectile
-                    Debug.Log($"{owner.name} shoots projectile at {CurrentTarget.name} for {damage} damage");
-                    CurrentTarget.Health.TakeDamage(damage, owner.gameObject);
+                    SpawnLinearProjectile(damage);
                     break;
 
                 case AttackType.Homing:
-                    // TODO: Spawn homing projectile
-                    Debug.Log($"{owner.name} casts homing spell at {CurrentTarget.name} for {damage} damage");
-                    CurrentTarget.Health.TakeDamage(damage, owner.gameObject);
+                    SpawnHomingProjectile(damage);
                     break;
 
                 case AttackType.AOE:
@@ -147,6 +143,58 @@ namespace AdaptiveDraftArena.Combat
             }
 
             Debug.Log($"{owner.name} AOE attacks for {damage} damage in {weapon.aoeRadius} radius");
+        }
+
+        private void SpawnLinearProjectile(float damage)
+        {
+            if (ProjectileManager.Instance == null)
+            {
+                Debug.LogError("ProjectileManager not found! Applying damage directly.");
+                CurrentTarget.Health.TakeDamage(damage, owner.gameObject);
+                return;
+            }
+
+            var config = new ProjectileConfig
+            {
+                spawnPosition = transform.position + Vector3.up * 1f,
+                owner = owner.gameObject,
+                ownerTeam = owner.Team,
+                targetPosition = CurrentTarget.transform.position,
+                targetTroop = CurrentTarget,
+                damage = damage,
+                speed = weapon.projectileSpeed,
+                maxLifetime = 5f,
+                effect = effect
+            };
+
+            ProjectileManager.Instance.SpawnLinearProjectile(config);
+            Debug.Log($"{owner.name} shoots arrow at {CurrentTarget.name} for {damage} damage");
+        }
+
+        private void SpawnHomingProjectile(float damage)
+        {
+            if (ProjectileManager.Instance == null)
+            {
+                Debug.LogError("ProjectileManager not found! Applying damage directly.");
+                CurrentTarget.Health.TakeDamage(damage, owner.gameObject);
+                return;
+            }
+
+            var config = new ProjectileConfig
+            {
+                spawnPosition = transform.position + Vector3.up * 1f,
+                owner = owner.gameObject,
+                ownerTeam = owner.Team,
+                targetPosition = CurrentTarget.transform.position,
+                targetTroop = CurrentTarget,
+                damage = damage,
+                speed = weapon.projectileSpeed,
+                maxLifetime = 5f,
+                effect = effect
+            };
+
+            ProjectileManager.Instance.SpawnHomingProjectile(config);
+            Debug.Log($"{owner.name} casts homing spell at {CurrentTarget.name} for {damage} damage");
         }
 
         private float CalculateDamage()

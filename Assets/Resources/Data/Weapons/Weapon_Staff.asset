@@ -17,10 +17,10 @@ MonoBehaviour:
   icon: {fileID: 8573549099317436776, guid: d6f3c04cd046e474b99dd71fb63181ce, type: 3}
   description: 
   baseDamage: 2
-  attackCooldown: 0.3
+  attackCooldown: 0.45
   attackType: 2
   projectilePrefab: {fileID: 7494990998535483223, guid: cb41c135269a016478d238ed6e200b1a, type: 3}
-  projectileSpeed: 10
+  projectileSpeed: 6
   aoeRadius: 0
   weaponModelPrefab: {fileID: 8097238424323401368, guid: 3ac4fc9da7599e147b56a760ddbf078c, type: 3}
   modelOffset: {x: 0, y: 0, z: 0}

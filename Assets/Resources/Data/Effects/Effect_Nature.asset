@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AdaptiveDraftArena.Modules.EffectModule
   moduleId: NATURE
   displayName: Nature
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 79e0729e1b3a49b48aa1256255f65937, type: 3}
   description: 
   elementType: 2
   tintColor: {r: 0.4713944, g: 0.77254903, b: 0.24313726, a: 1}

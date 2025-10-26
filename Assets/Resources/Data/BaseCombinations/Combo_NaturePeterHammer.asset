@@ -16,7 +16,7 @@ MonoBehaviour:
   _weapon: {fileID: 11400000, guid: f962699703dff2643901101526b452a5, type: 2}
   _ability: {fileID: 11400000, guid: 1569c6f001958aa4f9f23da2aa4d6fd9, type: 2}
   _effect: {fileID: 11400000, guid: 484b88adcb0502845a3f6941a117d562, type: 2}
-  _amount: 3
+  _amount: 1
   _isAIGenerated: 0
   _generationRound: 0
   counterReasoning: 
