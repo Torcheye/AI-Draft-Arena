@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Dan
   icon: {fileID: 21300000, guid: 74beab631f4208f4cbcfd7be0967a311, type: 3}
   description: 
-  baseHP: 5
+  baseHP: 14
   movementSpeed: 1
   attackRange: 12
   size: 1

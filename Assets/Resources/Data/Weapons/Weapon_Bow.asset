@@ -10,20 +10,20 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fbadecd944d055642bbf5b93df9209c7, type: 3}
-  m_Name: Weapon_Staff
+  m_Name: Weapon_Bow
   m_EditorClassIdentifier: Assembly-CSharp::AdaptiveDraftArena.Modules.WeaponModule
-  moduleId: STAFF
-  displayName: Staff
-  icon: {fileID: 8573549099317436776, guid: d6f3c04cd046e474b99dd71fb63181ce, type: 3}
+  moduleId: BOW
+  displayName: Bow
+  icon: {fileID: -415446080585258355, guid: be5669c5963408846a0f719188efe1a6, type: 3}
   description: 
-  baseDamage: 1
-  attackCooldown: 0.45
-  attackType: 2
-  projectilePrefab: {fileID: 7494990998535483223, guid: cb41c135269a016478d238ed6e200b1a, type: 3}
-  projectileSpeed: 3
+  baseDamage: 2
+  attackCooldown: 1
+  attackType: 1
+  projectilePrefab: {fileID: 7494990998535483223, guid: 3301258e4a2370d4ea0351d250914fbf, type: 3}
+  projectileSpeed: 5
   aoeRadius: 0
-  weaponModelPrefab: {fileID: 8097238424323401368, guid: 3ac4fc9da7599e147b56a760ddbf078c, type: 3}
+  weaponModelPrefab: {fileID: 8097238424323401368, guid: 815cd2d8efe127d4d89b40226d9bb65c, type: 3}
   modelOffset: {x: 0, y: 0, z: 0}
   modelRotation: {x: 0, y: 0, z: 0}
-  weaponSprite: {fileID: 8573549099317436776, guid: d6f3c04cd046e474b99dd71fb63181ce, type: 3}
+  weaponSprite: {fileID: -415446080585258355, guid: be5669c5963408846a0f719188efe1a6, type: 3}
   attackAnimation: {fileID: 0}

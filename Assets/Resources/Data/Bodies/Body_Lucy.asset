@@ -16,9 +16,9 @@ MonoBehaviour:
   displayName: Lucy
   icon: {fileID: 21300000, guid: caab8de993989b8488d2e0b568ec31f6, type: 3}
   description: 
-  baseHP: 10
+  baseHP: 24
   movementSpeed: 3
-  attackRange: 1.5
+  attackRange: 2
   size: 1
   bodyModelPrefab: {fileID: 5430419196445666029, guid: 0492d26139ca1ce4e91819d6087155cb, type: 3}
   weaponSocketPosition: {x: -0.472, y: 0.794, z: 0.645}

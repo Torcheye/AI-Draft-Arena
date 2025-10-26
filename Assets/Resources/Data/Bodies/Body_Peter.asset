@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Peter
   icon: {fileID: 21300000, guid: b3b94d0fe663743429b6ccb2edaeaf26, type: 3}
   description: 
-  baseHP: 7
+  baseHP: 18
   movementSpeed: 2
   attackRange: 8
   size: 1

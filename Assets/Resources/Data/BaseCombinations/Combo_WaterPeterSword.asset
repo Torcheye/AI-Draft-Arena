@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 84e1e03e0bafc324fa600c614acde54d, type: 3}
-  m_Name: Combo_NaturePeterHammer
+  m_Name: Combo_WaterPeterSword
   m_EditorClassIdentifier: Assembly-CSharp::AdaptiveDraftArena.Modules.TroopCombination
   _body: {fileID: 11400000, guid: b60acf83295ba3046a673a0364b919dd, type: 2}
-  _weapon: {fileID: 11400000, guid: f962699703dff2643901101526b452a5, type: 2}
+  _weapon: {fileID: 11400000, guid: ce873ab5992d5524f86f93e77ce9f872, type: 2}
   _ability: {fileID: 11400000, guid: 1569c6f001958aa4f9f23da2aa4d6fd9, type: 2}
-  _effect: {fileID: 11400000, guid: 484b88adcb0502845a3f6941a117d562, type: 2}
-  _amount: 1
+  _effect: {fileID: 11400000, guid: 954d9cc9db7e4e6498e5068db5174392, type: 2}
+  _amount: 2
   _isAIGenerated: 0
   _generationRound: 0
   counterReasoning: 

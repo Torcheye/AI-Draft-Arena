@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 84e1e03e0bafc324fa600c614acde54d, type: 3}
-  m_Name: Combo_NatureDanStaff
+  m_Name: Combo_FirePeterHammer
   m_EditorClassIdentifier: Assembly-CSharp::AdaptiveDraftArena.Modules.TroopCombination
-  _body: {fileID: 11400000, guid: 4ae4d45a2bb9ea54f92db563797b6510, type: 2}
-  _weapon: {fileID: 11400000, guid: 58346105886f69446a76f9045aad87a9, type: 2}
+  _body: {fileID: 11400000, guid: b60acf83295ba3046a673a0364b919dd, type: 2}
+  _weapon: {fileID: 11400000, guid: f962699703dff2643901101526b452a5, type: 2}
   _ability: {fileID: 11400000, guid: 1569c6f001958aa4f9f23da2aa4d6fd9, type: 2}
-  _effect: {fileID: 11400000, guid: 484b88adcb0502845a3f6941a117d562, type: 2}
+  _effect: {fileID: 11400000, guid: 3f6cec85805e16a4d90f60f418714c6d, type: 2}
   _amount: 2
   _isAIGenerated: 0
   _generationRound: 0
