@@ -16,10 +16,11 @@ MonoBehaviour:
   displayName: Knight Body
   icon: {fileID: 0}
   description: 
-  baseHP: 8
-  movementSpeed: 1.5
+  baseHP: 10
+  movementSpeed: 3
   attackRange: 1.5
   size: 1
+  bodyModelPrefab: {fileID: 0}
+  weaponSocketPosition: {x: 0, y: 0, z: 0}
   bodySprite: {fileID: 0}
-  weaponAnchorPoint: {x: 0, y: 0}
   role: 0

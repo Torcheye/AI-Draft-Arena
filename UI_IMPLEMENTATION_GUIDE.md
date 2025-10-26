@@ -335,6 +335,43 @@ RevealPanel (Full screen)
 
 ---
 
+## Phase 3.5: UIManager Setup
+
+**Script:** `UIManager.cs` - Handles screen transitions based on match phases
+
+**Purpose:**
+- Subscribes to MatchController phase changes
+- Shows/hides DraftUI and BattleUI based on current phase
+- Ensures victory banner is hidden when starting new draft
+- Prevents UI overlap issues
+
+**Setup Instructions:**
+
+1. **Add UIManager to Scene:**
+   - Create new GameObject in Hierarchy: "UIManager"
+   - Add Component → UIManager.cs
+   - Position: Doesn't matter (no visual representation)
+
+2. **Assign Inspector References:**
+   - `matchController` → MatchController in scene
+   - `draftUI` → DraftScreen (DraftUI component)
+   - `battleUI` → BattleScreen (BattleUI component)
+
+3. **Initial State:**
+   - Both DraftScreen and BattleScreen can be active or inactive in editor
+   - UIManager will manage visibility at runtime
+   - Recommended: Leave both inactive initially for clean startup
+
+**Phase Transition Behavior:**
+- **MatchStart:** Hide all screens
+- **Draft:** Hide BattleUI (+ reset), Show DraftUI (+ reset)
+- **Spawn:** Keep Draft visible (brief phase)
+- **Battle:** Hide DraftUI, Show BattleUI (+ reset)
+- **RoundEnd:** Keep BattleUI visible (shows victory banner)
+- **MatchEnd:** Keep BattleUI visible (final results)
+
+---
+
 ## Phase 4: Inspector Reference Assignment Checklist
 
 ### DraftCard Component
@@ -367,6 +404,11 @@ RevealPanel (Full screen)
 - [ ] `victoryBanner` → VictoryBanner (GameObject)
 - [ ] `winnerText` → VictoryPanel/WinnerText (TMP_Text)
 - [ ] `bannerCanvasGroup` → VictoryBanner/CanvasGroup
+
+### UIManager Component
+- [ ] `matchController` → MatchController in scene
+- [ ] `draftUI` → DraftScreen (DraftUI component)
+- [ ] `battleUI` → BattleScreen (BattleUI component)
 
 ---
 
@@ -403,8 +445,16 @@ RevealPanel (Full screen)
 - [ ] Victory banner appears on battle end
 - [ ] "VICTORY" shows for player win
 - [ ] "DEFEAT" shows for player loss
-- [ ] Reason text displays correctly
 - [ ] Banner fades in smoothly
+
+### UI Manager Tests
+- [ ] Draft screen is completely hidden during battle
+- [ ] Battle screen is completely hidden during draft
+- [ ] Victory banner is hidden when starting new draft
+- [ ] No timer overlap between draft and battle
+- [ ] Stats display as integers (no decimals)
+- [ ] Screen transitions are smooth
+- [ ] No UI elements persist across phase changes
 
 ---
 
@@ -507,14 +557,15 @@ card.DOAnchorPos(new Vector2(300, 0), 0.5f).SetEase(Ease.OutBack);
 
 ## Implementation Order
 
-1. **Script: DraftCard.cs** → Implement → Review → Commit
-2. **Script: DraftUI.cs** → Implement → Review → Commit
-3. **Script: BattleUI.cs** → Implement → Review → Commit
-4. **Prefab: DraftCard** → Create in Unity → Test → Commit
-5. **Prefab: DraftScreen** → Create in Unity → Test → Commit
-6. **Prefab: BattleScreen** → Create in Unity → Test → Commit
-7. **Integration: Add to Canvas** → Wire up → Test full flow → Commit
-8. **Polish: Animations** → Add DoTween effects → Test → Commit
+1. **Script: DraftCard.cs** → Implement → Review → Commit ✅
+2. **Script: DraftUI.cs** → Implement → Review → Commit ✅
+3. **Script: BattleUI.cs** → Implement → Review → Commit ✅
+4. **Prefab: DraftCard** → Create in Unity → Test → Commit ✅
+5. **Prefab: DraftScreen** → Create in Unity → Test → Commit ✅
+6. **Prefab: BattleScreen** → Create in Unity → Test → Commit ✅
+7. **Script: UIManager.cs** → Implement → Add to scene → Wire up ✅
+8. **Integration: Test full flow** → Fix issues → Test → Commit
+9. **Polish: Animations** → Add DoTween effects → Test → Commit
 
 ---
 

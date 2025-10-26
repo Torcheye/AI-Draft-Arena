@@ -44,6 +44,29 @@ namespace AdaptiveDraftArena.UI
         private Tweener fadeInTween;
         private Tweener fadeOutTween;
 
+        private void Awake()
+        {
+            // Hide screen initially
+            if (canvasGroup != null)
+            {
+                canvasGroup.alpha = 0f;
+                canvasGroup.interactable = false;
+                canvasGroup.blocksRaycasts = false;
+            }
+
+            // Subscribe to card click events (only once)
+            if (draftCards != null)
+            {
+                foreach (var card in draftCards)
+                {
+                    if (card != null)
+                    {
+                        card.OnCardClicked += HandleCardClicked;
+                    }
+                }
+            }
+        }
+
         private void Start()
         {
             if (draftController == null)
@@ -55,18 +78,6 @@ namespace AdaptiveDraftArena.UI
 
             SubscribeToEvents();
             ValidateReferences();
-
-            // Subscribe to card click events
-            if (draftCards != null)
-            {
-                foreach (var card in draftCards)
-                {
-                    if (card != null)
-                    {
-                        card.OnCardClicked += HandleCardClicked;
-                    }
-                }
-            }
         }
 
         private void OnDestroy()
@@ -267,13 +278,13 @@ namespace AdaptiveDraftArena.UI
         {
             if (canvasGroup == null)
             {
-                gameObject.SetActive(true);
                 return;
             }
 
             fadeInTween?.Kill();
-            gameObject.SetActive(true);
             canvasGroup.alpha = 0f;
+            canvasGroup.interactable = true;
+            canvasGroup.blocksRaycasts = true;
             fadeInTween = canvasGroup.DOFade(1f, fadeInDuration)
                 .SetEase(Ease.OutQuad)
                 .SetLink(gameObject)
@@ -287,21 +298,16 @@ namespace AdaptiveDraftArena.UI
         {
             if (canvasGroup == null)
             {
-                gameObject.SetActive(false);
                 return;
             }
 
             fadeOutTween?.Kill();
+            canvasGroup.interactable = false;
+            canvasGroup.blocksRaycasts = false;
             fadeOutTween = canvasGroup.DOFade(0f, fadeOutDuration)
                 .SetEase(Ease.InQuad)
                 .SetLink(gameObject)
-                .SetAutoKill(true)
-                .OnComplete(() =>
-                {
-                    // Null checks to prevent issues if destroyed mid-animation
-                    if (this != null && gameObject != null)
-                        gameObject.SetActive(false);
-                });
+                .SetAutoKill(true);
         }
 
         /// <summary>

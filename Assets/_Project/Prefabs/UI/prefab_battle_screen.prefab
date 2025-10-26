@@ -85,6 +85,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6465460105696699598}
   - component: {fileID: 4425654740528637352}
+  - component: {fileID: 8194097025877100589}
   m_Layer: 5
   m_Name: prefab_battle_screen
   m_TagString: Untagged
@@ -126,6 +127,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AdaptiveDraftArena.UI.BattleUI
   battleController: {fileID: 0}
+  canvasGroup: {fileID: 8194097025877100589}
   timerText: {fileID: 7187723949124384317}
   victoryBanner: {fileID: 8995607279390831412}
   winnerText: {fileID: 6172471755531554362}
@@ -139,9 +141,23 @@ MonoBehaviour:
   urgentColor: {r: 1, g: 0.32, b: 0.32, a: 1}
   playerHPColor: {r: 0.13, g: 0.59, b: 0.95, a: 1}
   aiHPColor: {r: 0.96, g: 0.26, b: 0.21, a: 1}
+  fadeInDuration: 0.4
+  fadeOutDuration: 0.3
   bannerFadeDuration: 0.6
   bannerScaleDelay: 0.2
   bannerScaleDuration: 0.5
+--- !u!225 &8194097025877100589
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 883374383157750778}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &3866138765172672542
 GameObject:
   m_ObjectHideFlags: 0

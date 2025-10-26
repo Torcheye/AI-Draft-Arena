@@ -4,6 +4,7 @@ namespace AdaptiveDraftArena.Match
     {
         MatchStart,
         Draft,
+        Reveal,
         Spawn,
         Battle,
         RoundEnd,

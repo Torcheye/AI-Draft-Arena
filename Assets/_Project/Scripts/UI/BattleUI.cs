@@ -15,6 +15,9 @@ namespace AdaptiveDraftArena.UI
         [Header("Dependencies")]
         [SerializeField] private BattleController battleController;
 
+        [Header("Screen Control")]
+        [SerializeField] private CanvasGroup canvasGroup;
+
         [Header("Timer Display")]
         [SerializeField] private TMP_Text timerText;
 
@@ -41,12 +44,16 @@ namespace AdaptiveDraftArena.UI
         [SerializeField] private Color aiHPColor = new Color(0.96f, 0.26f, 0.21f); // Red
 
         [Header("Animation Settings")]
+        [SerializeField] private float fadeInDuration = 0.4f;
+        [SerializeField] private float fadeOutDuration = 0.3f;
         [SerializeField] private float bannerFadeDuration = 0.6f;
         [SerializeField] private float bannerScaleDelay = 0.2f;
         [SerializeField] private float bannerScaleDuration = 0.5f;
 
         private float maxPlayerHP;
         private float maxAIHP;
+        private Tweener fadeInTween;
+        private Tweener fadeOutTween;
         private Tweener bannerFadeTween;
         private Tweener bannerScaleTween;
         private Image playerHPFill;
@@ -54,7 +61,14 @@ namespace AdaptiveDraftArena.UI
 
         private void Awake()
         {
-            // Hide victory banner initially
+            // Hide screen and victory banner initially
+            if (canvasGroup != null)
+            {
+                canvasGroup.alpha = 0f;
+                canvasGroup.interactable = false;
+                canvasGroup.blocksRaycasts = false;
+            }
+
             if (victoryBanner != null)
             {
                 victoryBanner.SetActive(false);
@@ -79,6 +93,8 @@ namespace AdaptiveDraftArena.UI
             UnsubscribeFromEvents();
 
             // Kill all tweens
+            fadeInTween?.Kill();
+            fadeOutTween?.Kill();
             bannerFadeTween?.Kill();
             bannerScaleTween?.Kill();
         }
@@ -105,6 +121,7 @@ namespace AdaptiveDraftArena.UI
         {
             #if UNITY_EDITOR
             if (battleController == null) Debug.LogWarning($"BattleUI '{name}': battleController not assigned!", this);
+            if (canvasGroup == null) Debug.LogWarning($"BattleUI '{name}': canvasGroup not assigned!", this);
             if (timerText == null) Debug.LogWarning($"BattleUI '{name}': timerText not assigned!", this);
             if (victoryBanner == null) Debug.LogWarning($"BattleUI '{name}': victoryBanner not assigned!", this);
             if (winnerText == null) Debug.LogWarning($"BattleUI '{name}': winnerText not assigned!", this);
@@ -196,19 +213,42 @@ namespace AdaptiveDraftArena.UI
         }
 
         /// <summary>
-        /// Shows battle screen.
+        /// Shows battle screen with fade-in animation.
         /// </summary>
         public void ShowBattleScreen()
         {
-            gameObject.SetActive(true);
+            if (canvasGroup == null)
+            {
+                return;
+            }
+
+            fadeInTween?.Kill();
+            canvasGroup.alpha = 0f;
+            canvasGroup.interactable = true;
+            canvasGroup.blocksRaycasts = true;
+            fadeInTween = canvasGroup.DOFade(1f, fadeInDuration)
+                .SetEase(Ease.OutQuad)
+                .SetLink(gameObject)
+                .SetAutoKill(true);
         }
 
         /// <summary>
-        /// Hides battle screen.
+        /// Hides battle screen with fade-out animation.
         /// </summary>
         public void HideBattleScreen()
         {
-            gameObject.SetActive(false);
+            if (canvasGroup == null)
+            {
+                return;
+            }
+
+            fadeOutTween?.Kill();
+            canvasGroup.interactable = false;
+            canvasGroup.blocksRaycasts = false;
+            fadeOutTween = canvasGroup.DOFade(0f, fadeOutDuration)
+                .SetEase(Ease.InQuad)
+                .SetLink(gameObject)
+                .SetAutoKill(true);
         }
 
         /// <summary>

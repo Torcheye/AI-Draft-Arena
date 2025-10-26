@@ -16,12 +16,13 @@ MonoBehaviour:
   displayName: Sword Weapon
   icon: {fileID: 0}
   description: 
-  baseDamage: 3
+  baseDamage: 4
   attackCooldown: 0.8
   attackType: 0
   projectilePrefab: {fileID: 0}
   projectileSpeed: 10
   aoeRadius: 0
+  weaponModelPrefab: {fileID: 0}
+  modelOffset: {x: 0, y: 0, z: 0}
   weaponSprite: {fileID: 0}
-  spriteOffset: {x: 0, y: 0}
   attackAnimation: {fileID: 0}

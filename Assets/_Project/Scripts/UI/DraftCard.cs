@@ -143,12 +143,14 @@ namespace AdaptiveDraftArena.UI
 
             if (hpText != null)
             {
-                hpText.SetText("{0:F1}", combination.GetFinalHP());
+                var intHp = Mathf.RoundToInt(combination.GetFinalHP());
+                hpText.SetText(intHp.ToString());
             }
 
             if (dmgText != null)
             {
-                dmgText.SetText("{0:F1}", combination.GetFinalDamage());
+                var intDmg = Mathf.RoundToInt(combination.GetFinalDamage());
+                dmgText.SetText(intDmg.ToString());
             }
 
             // Tint card background based on element color (cached for performance)
@@ -244,8 +246,6 @@ namespace AdaptiveDraftArena.UI
                 Debug.LogWarning("DraftCard: Cannot click - no combination set!");
                 return;
             }
-
-            Debug.Log("ss");
 
             OnCardClicked?.Invoke(this);
         }

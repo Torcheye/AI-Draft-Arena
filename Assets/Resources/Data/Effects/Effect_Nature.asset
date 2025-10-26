@@ -21,5 +21,5 @@ MonoBehaviour:
   strongVsElement: WATER
   weakVsElement: FIRE
   advantageMultiplier: 1.5
-  disadvantageMultiplier: 0.75
+  disadvantageMultiplier: 1
   auraPrefab: {fileID: 0}

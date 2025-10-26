@@ -175,6 +175,9 @@ namespace AdaptiveDraftArena.Match
             // Draft Phase
             await RunDraftPhase(cancellationToken);
 
+            // Reveal Phase
+            await RunRevealPhase(cancellationToken);
+
             // Spawn Phase
             await RunSpawnPhase(cancellationToken);
 
@@ -196,6 +199,18 @@ namespace AdaptiveDraftArena.Match
             State.AISelectedCombo = aiPick;
 
             Debug.Log($"Draft phase ended - Player: {playerPick?.DisplayName} | AI: {aiPick?.DisplayName}");
+        }
+
+        private async UniTask RunRevealPhase(CancellationToken cancellationToken)
+        {
+            ChangePhase(MatchPhase.Reveal);
+            Debug.Log("Reveal phase started");
+
+            // Hold for 2-3 seconds to show player and AI selections
+            // The UI will be animated by RevealUI component via UIManager
+            await UniTask.Delay(System.TimeSpan.FromSeconds(2.5f), cancellationToken: cancellationToken);
+
+            Debug.Log($"Reveal phase ended - Player: {State.PlayerSelectedCombo?.DisplayName} vs AI: {State.AISelectedCombo?.DisplayName}");
         }
 
         private async UniTask RunSpawnPhase(CancellationToken cancellationToken)
