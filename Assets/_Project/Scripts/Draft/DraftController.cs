@@ -18,14 +18,18 @@ namespace AdaptiveDraftArena.Draft
         public List<ICombination> CurrentAIOptions { get; private set; }
         public ICombination PlayerSelection { get; private set; }
         public ICombination AISelection { get; private set; }
+        public int CurrentPickNumber { get; private set; } // Track which pick we're on (1, 2, 3)
+        public int TotalPicksThisRound { get; private set; }
 
         // Events
         public event Action<List<ICombination>> OnPlayerOptionsGenerated;
+        public event Action OnPlayerWaiting; // Player has no pick this round (comeback bonus for opponent)
         public event Action<float> OnTimerUpdated; // remaining time
         public event Action OnTimerWarning; // 5 seconds warning
         public event Action<ICombination> OnPlayerSelected;
         public event Action<ICombination> OnAISelected;
-        public event Action<ICombination, ICombination> OnDraftCompleted; // player, AI
+        public event Action<ICombination, ICombination> OnPickCompleted; // Fired after each pick (for reveals)
+        public event Action<List<ICombination>, List<ICombination>> OnDraftCompleted; // All picks done
 
         private GameConfig config;
         private MatchState matchState;
@@ -63,8 +67,13 @@ namespace AdaptiveDraftArena.Draft
             }
         }
 
-        public async UniTask<(ICombination playerPick, ICombination aiPick)> StartDraftAsync(
+        /// <summary>
+        /// Starts multi-pick draft phase. Returns all picks made by both sides.
+        /// </summary>
+        public async UniTask<(List<ICombination> playerPicks, List<ICombination> aiPicks)> StartMultiPickDraftAsync(
             MatchState state,
+            int playerPickCount,
+            int aiPickCount,
             CancellationToken cancellationToken)
         {
             // Cancel any existing draft
@@ -74,32 +83,55 @@ namespace AdaptiveDraftArena.Draft
 
             matchState = state;
             IsDraftActive = true;
-            DraftTimeRemaining = config.draftDuration;
-            playerHasSelected = false;
-            aiHasSelected = false;
-            warningTriggered = false;
-            PlayerSelection = null;
-            AISelection = null;
 
-            // Generate draft options
-            GenerateDraftOptions();
+            // Clear previous selections
+            var playerPicks = new List<ICombination>();
+            var aiPicks = new List<ICombination>();
 
-            Debug.Log($"Draft started! Duration: {config.draftDuration}s | Options: {config.draftOptionsCount}");
+            // Determine total picks (max of player and AI)
+            TotalPicksThisRound = Mathf.Max(playerPickCount, aiPickCount);
+
+            Debug.Log($"Multi-pick draft started! Player picks: {playerPickCount}, AI picks: {aiPickCount}, Total rounds: {TotalPicksThisRound}");
 
             try
             {
-                var result = await RunDraftLoop(draftCts.Token);
-                return result;
+                // Run multiple pick loops
+                for (int pickNum = 1; pickNum <= TotalPicksThisRound; pickNum++)
+                {
+                    CurrentPickNumber = pickNum;
+
+                    bool playerShouldPick = pickNum <= playerPickCount;
+                    bool aiShouldPick = pickNum <= aiPickCount;
+
+                    Debug.Log($"=== Pick {pickNum}/{TotalPicksThisRound} | Player: {playerShouldPick}, AI: {aiShouldPick} ===");
+
+                    var (playerPick, aiPick) = await RunSinglePickAsync(playerShouldPick, aiShouldPick, draftCts.Token);
+
+                    if (playerPick != null) playerPicks.Add(playerPick);
+                    if (aiPick != null) aiPicks.Add(aiPick);
+
+                    // Fire pick completed event for reveal
+                    OnPickCompleted?.Invoke(playerPick, aiPick);
+
+                    // Wait for reveal to complete (timing configured in GameConfig.revealTotalDuration)
+                    await UniTask.Delay(TimeSpan.FromSeconds(config.revealTotalDuration), cancellationToken: draftCts.Token);
+                }
+
+                IsDraftActive = false;
+                OnDraftCompleted?.Invoke(playerPicks, aiPicks);
+
+                Debug.Log($"Multi-pick draft completed - Player: {playerPicks.Count} picks, AI: {aiPicks.Count} picks");
+                return (playerPicks, aiPicks);
             }
             catch (OperationCanceledException)
             {
-                Debug.Log("Draft was cancelled");
+                Debug.Log("Multi-pick draft was cancelled");
                 IsDraftActive = false;
                 throw;
             }
         }
 
-        private void GenerateDraftOptions()
+        private void GenerateDraftOptions(bool showToPlayer = true)
         {
             var fullPool = matchState.GetFullDraftPool();
 
@@ -175,9 +207,17 @@ namespace AdaptiveDraftArena.Draft
             CurrentAIOptions = GenerateAIOptions(fullPool, config.draftOptionsCount);
             matchState.AIDraftOptions = new List<ICombination>(CurrentAIOptions);
 
-            OnPlayerOptionsGenerated?.Invoke(CurrentPlayerOptions);
+            // Only notify UI if player should see options this pick
+            if (showToPlayer)
+            {
+                OnPlayerOptionsGenerated?.Invoke(CurrentPlayerOptions);
+            }
+            else
+            {
+                OnPlayerWaiting?.Invoke(); // Notify UI that player is waiting (opponent's comeback bonus pick)
+            }
 
-            Debug.Log($"Generated draft options - Player: {CurrentPlayerOptions.Count} | AI: {CurrentAIOptions.Count}");
+            Debug.Log($"Generated draft options - Player: {CurrentPlayerOptions.Count} | AI: {CurrentAIOptions.Count} | Show to player: {showToPlayer}");
         }
 
         /// <summary>
@@ -210,44 +250,64 @@ namespace AdaptiveDraftArena.Draft
             return aiOptions;
         }
 
-        private async UniTask<(ICombination playerPick, ICombination aiPick)> RunDraftLoop(CancellationToken cancellationToken)
+        /// <summary>
+        /// Runs a single pick for both player and AI (or just one side if needed).
+        /// </summary>
+        private async UniTask<(ICombination playerPick, ICombination aiPick)> RunSinglePickAsync(
+            bool playerShouldPick,
+            bool aiShouldPick,
+            CancellationToken cancellationToken)
         {
-            // AI selects immediately (simple random for now)
-            PerformAISelection();
+            // Reset selection state
+            DraftTimeRemaining = config.draftDuration;
+            playerHasSelected = false;
+            aiHasSelected = false;
+            warningTriggered = false;
+            PlayerSelection = null;
+            AISelection = null;
 
-            // Player draft loop with timer
-            while (DraftTimeRemaining > 0 && !playerHasSelected)
+            // Generate fresh draft options for this pick (only show to player if they should pick)
+            GenerateDraftOptions(playerShouldPick);
+
+            // AI selects immediately if it should pick
+            if (aiShouldPick)
             {
-                DraftTimeRemaining -= Time.deltaTime;
-                OnTimerUpdated?.Invoke(DraftTimeRemaining);
+                PerformAISelection();
+            }
 
-                // Warning at 5 seconds
-                if (!warningTriggered && DraftTimeRemaining <= 5f)
+            // Player draft loop with timer (only if player should pick)
+            if (playerShouldPick)
+            {
+                while (DraftTimeRemaining > 0 && !playerHasSelected)
                 {
-                    warningTriggered = true;
-                    OnTimerWarning?.Invoke();
-                    Debug.Log("Draft timer warning! 5 seconds remaining");
+                    DraftTimeRemaining -= Time.deltaTime;
+                    OnTimerUpdated?.Invoke(DraftTimeRemaining);
+
+                    // Warning at 3 seconds (reduced from 5 since timer is 10s now)
+                    if (!warningTriggered && DraftTimeRemaining <= 3f)
+                    {
+                        warningTriggered = true;
+                        OnTimerWarning?.Invoke();
+                        Debug.Log("Draft timer warning! 3 seconds remaining");
+                    }
+
+                    await UniTask.Yield(cancellationToken);
                 }
 
-                await UniTask.Yield(cancellationToken);
+                // Auto-select if player didn't pick
+                if (!playerHasSelected)
+                {
+                    AutoSelectForPlayer();
+                }
             }
 
-            // Auto-select if player didn't pick
-            if (!playerHasSelected)
-            {
-                AutoSelectForPlayer();
-            }
+            // Ensure valid selections (fallback if needed)
+            if (playerShouldPick) PlayerSelection = EnsureValidSelection(PlayerSelection, "Player");
+            if (aiShouldPick) AISelection = EnsureValidSelection(AISelection, "AI");
 
-            // Ensure both selections are valid
-            EnsureValidSelections();
+            Debug.Log($"Single pick completed - Player: {PlayerSelection?.DisplayName ?? "None"} | AI: {AISelection?.DisplayName ?? "None"}");
 
-            // Complete draft
-            IsDraftActive = false;
-            OnDraftCompleted?.Invoke(PlayerSelection, AISelection);
-
-            Debug.Log($"Draft completed - Player: {PlayerSelection?.DisplayName ?? "None"} | AI: {AISelection?.DisplayName ?? "None"}");
-
-            return (PlayerSelection, AISelection);
+            return (playerShouldPick ? PlayerSelection : null, aiShouldPick ? AISelection : null);
         }
 
         public void SelectCombination(ICombination combination)
@@ -272,8 +332,6 @@ namespace AdaptiveDraftArena.Draft
 
             PlayerSelection = combination;
             playerHasSelected = true;
-            matchState.PlayerSelectedCombo = combination;
-            matchState.PlayerPickHistory.Add(combination);
 
             OnPlayerSelected?.Invoke(combination);
             Debug.Log($"Player selected: {combination.DisplayName}");
@@ -314,7 +372,6 @@ namespace AdaptiveDraftArena.Draft
 
             AISelection = CurrentAIOptions[selectedIndex];
             aiHasSelected = true;
-            matchState.AISelectedCombo = AISelection;
 
             OnAISelected?.Invoke(AISelection);
             Debug.Log($"AI selected: {AISelection.DisplayName}");
@@ -332,43 +389,27 @@ namespace AdaptiveDraftArena.Draft
             var randomIndex = UnityEngine.Random.Range(0, CurrentPlayerOptions.Count);
             PlayerSelection = CurrentPlayerOptions[randomIndex];
             playerHasSelected = true;
-            matchState.PlayerSelectedCombo = PlayerSelection;
-            matchState.PlayerPickHistory.Add(PlayerSelection);
 
             OnPlayerSelected?.Invoke(PlayerSelection);
             Debug.Log($"Player auto-selected: {PlayerSelection.DisplayName} (timeout)");
         }
 
-        private void EnsureValidSelections()
+        private ICombination EnsureValidSelection(ICombination selection, string side)
         {
-            // Fallback to base combinations if selections are invalid
-            if (PlayerSelection == null)
+            // Fallback to base combinations if selection is invalid
+            if (selection == null)
             {
                 if (matchState.BaseCombinations != null && matchState.BaseCombinations.Count > 0)
                 {
-                    PlayerSelection = matchState.BaseCombinations[0];
-                    matchState.PlayerSelectedCombo = PlayerSelection;
-                    Debug.LogWarning($"Player selection was null - using fallback: {PlayerSelection.DisplayName}");
+                    selection = matchState.BaseCombinations[0];
+                    Debug.LogWarning($"{side} selection was null - using fallback: {selection.DisplayName}");
                 }
                 else
                 {
-                    Debug.LogError("Cannot ensure valid player selection - BaseCombinations is empty!");
+                    Debug.LogError($"Cannot ensure valid {side} selection - BaseCombinations is empty!");
                 }
             }
-
-            if (AISelection == null)
-            {
-                if (matchState.BaseCombinations != null && matchState.BaseCombinations.Count > 0)
-                {
-                    AISelection = matchState.BaseCombinations[0];
-                    matchState.AISelectedCombo = AISelection;
-                    Debug.LogWarning($"AI selection was null - using fallback: {AISelection.DisplayName}");
-                }
-                else
-                {
-                    Debug.LogError("Cannot ensure valid AI selection - BaseCombinations is empty!");
-                }
-            }
+            return selection;
         }
 
         public void StopDraft()

@@ -11,6 +11,7 @@ namespace AdaptiveDraftArena.UI
     {
         [Header("Dependencies")]
         [SerializeField] private MatchController matchController;
+        [SerializeField] private Draft.DraftController draftController;
 
         [Header("UI Screens")]
         [SerializeField] private DraftUI draftUI;
@@ -22,6 +23,13 @@ namespace AdaptiveDraftArena.UI
             if (matchController == null)
             {
                 Debug.LogError("UIManager: MatchController not assigned in Inspector!", this);
+                enabled = false;
+                return;
+            }
+
+            if (draftController == null)
+            {
+                Debug.LogError("UIManager: DraftController not assigned in Inspector!", this);
                 enabled = false;
                 return;
             }
@@ -44,6 +52,11 @@ namespace AdaptiveDraftArena.UI
             {
                 matchController.OnPhaseChanged += HandlePhaseChanged;
             }
+
+            if (draftController != null)
+            {
+                draftController.OnPickCompleted += HandlePickCompleted;
+            }
         }
 
         private void UnsubscribeFromEvents()
@@ -51,6 +64,11 @@ namespace AdaptiveDraftArena.UI
             if (matchController != null)
             {
                 matchController.OnPhaseChanged -= HandlePhaseChanged;
+            }
+
+            if (draftController != null)
+            {
+                draftController.OnPickCompleted -= HandlePickCompleted;
             }
         }
 
@@ -81,11 +99,15 @@ namespace AdaptiveDraftArena.UI
                     break;
 
                 case MatchPhase.Reveal:
-                    ShowRevealScreen();
+                    // Reveal phase removed - reveals now happen during draft after each pick
                     break;
 
                 case MatchPhase.Spawn:
-                    // Keep reveal screen visible during spawn (brief phase)
+                    // Hide draft screen when spawning
+                    if (draftUI != null)
+                    {
+                        draftUI.HideDraftScreen();
+                    }
                     break;
 
                 case MatchPhase.Battle:
@@ -100,6 +122,39 @@ namespace AdaptiveDraftArena.UI
                     // Keep battle screen visible to show final results
                     break;
             }
+        }
+
+        /// <summary>
+        /// Handles per-pick reveals during draft phase.
+        /// Called after each pick is made by both sides.
+        /// </summary>
+        private void HandlePickCompleted(Modules.ICombination playerPick, Modules.ICombination aiPick)
+        {
+            if (revealUI == null) return;
+
+            // Validate that at least one pick is valid
+            if (playerPick == null && aiPick == null)
+            {
+                Debug.LogWarning("UIManager: Both picks are null, skipping reveal");
+                return;
+            }
+
+            // Hide draft screen during reveal
+            if (draftUI != null)
+            {
+                draftUI.HideDraftScreen();
+            }
+
+            // Determine if this is a comeback bonus pick (only one side picks)
+            bool isOneSidedPick = (playerPick == null) != (aiPick == null); // XOR: one is null, other is not
+            bool showComebackBonus = isOneSidedPick;
+
+            Debug.Log($"UIManager: Showing per-pick reveal | Player: {playerPick?.DisplayName ?? "None"} | AI: {aiPick?.DisplayName ?? "None"} | Comeback: {showComebackBonus}");
+
+            // Show reveal with error handling
+            revealUI.ShowRevealAsync(playerPick, aiPick, showComebackBonus)
+                .ContinueWith(() => Debug.Log("UIManager: Reveal completed successfully"))
+                .SuppressCancellationThrow();
         }
 
         private void ShowDraftScreen()
@@ -124,31 +179,7 @@ namespace AdaptiveDraftArena.UI
             Debug.Log("UIManager: Draft screen shown");
         }
 
-        private void ShowRevealScreen()
-        {
-            if (draftUI != null)
-            {
-                draftUI.HideDraftScreen();
-            }
-
-            if (revealUI != null && matchController != null && matchController.State != null)
-            {
-                var playerSelection = matchController.State.PlayerSelectedCombo;
-                var aiSelection = matchController.State.AISelectedCombo;
-
-                if (playerSelection != null && aiSelection != null)
-                {
-                    // Show reveal screen with animation (fire and forget)
-                    revealUI.ShowRevealAsync(playerSelection, aiSelection).Forget();
-                }
-                else
-                {
-                    Debug.LogWarning("UIManager: Cannot show reveal - selections are null!");
-                }
-            }
-
-            Debug.Log("UIManager: Reveal screen shown");
-        }
+        // ShowRevealScreen removed - reveals now triggered by OnPickCompleted event during draft
 
         private void ShowBattleScreen()
         {

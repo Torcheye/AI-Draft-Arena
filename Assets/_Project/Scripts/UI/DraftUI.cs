@@ -107,6 +107,7 @@ namespace AdaptiveDraftArena.UI
             if (draftController == null) return;
 
             draftController.OnPlayerOptionsGenerated += DisplayDraftOptions;
+            draftController.OnPlayerWaiting += OnPlayerWaiting;
             draftController.OnTimerUpdated += UpdateTimer;
             draftController.OnTimerWarning += TriggerTimerWarning;
             draftController.OnPlayerSelected += OnPlayerSelected;
@@ -118,6 +119,7 @@ namespace AdaptiveDraftArena.UI
             if (draftController == null) return;
 
             draftController.OnPlayerOptionsGenerated -= DisplayDraftOptions;
+            draftController.OnPlayerWaiting -= OnPlayerWaiting;
             draftController.OnTimerUpdated -= UpdateTimer;
             draftController.OnTimerWarning -= TriggerTimerWarning;
             draftController.OnPlayerSelected -= OnPlayerSelected;
@@ -163,6 +165,7 @@ namespace AdaptiveDraftArena.UI
             {
                 if (draftCards[i] != null && options[i] != null)
                 {
+                    draftCards[i].gameObject.SetActive(true); // Re-enable card (in case it was hidden)
                     draftCards[i].SetCombination(options[i]);
                     draftCards[i].SetInteractable(true);
                     draftCards[i].ResetCard();
@@ -249,7 +252,30 @@ namespace AdaptiveDraftArena.UI
         /// <summary>
         /// Handles draft completion and fades out screen.
         /// </summary>
-        private void OnDraftCompleted(ICombination playerPick, ICombination aiPick)
+        /// <summary>
+        /// Handles when player is waiting (opponent has comeback bonus pick).
+        /// </summary>
+        private void OnPlayerWaiting()
+        {
+            Debug.Log("DraftUI: Player waiting for opponent's comeback bonus pick - Hiding cards");
+
+            // Show draft screen (so player sees they're waiting)
+            ShowDraftScreen();
+
+            // Hide all draft cards
+            if (draftCards != null)
+            {
+                foreach (var card in draftCards)
+                {
+                    if (card != null)
+                    {
+                        card.gameObject.SetActive(false);
+                    }
+                }
+            }
+        }
+
+        private void OnDraftCompleted(List<ICombination> playerPicks, List<ICombination> aiPicks)
         {
             Debug.Log($"DraftUI: Draft completed - Fading out screen");
             HideDraftScreen();

@@ -184,16 +184,44 @@ namespace AdaptiveDraftArena.Match
         }
 
         /// <summary>
-        /// Generates 4 random AI combinations starting from Round 2.
+        /// Calculates pick counts for player and AI based on last round winner.
+        /// Last round loser gets bonus pick (comeback mechanic).
+        /// First round: both get base picks.
+        /// </summary>
+        private (int playerPicks, int aiPicks) CalculatePickCounts()
+        {
+            int basePicks = config.basePicksPerRound;
+            int bonusPick = config.bonusPickForLoser;
+
+            // First round: both get base picks
+            if (State.CurrentRound == 1)
+            {
+                Debug.Log($"[MatchController] Round 1: Both sides get {basePicks} picks");
+                return (basePicks, basePicks);
+            }
+
+            // Subsequent rounds: loser gets bonus
+            bool playerWonLast = State.LastRoundWinner == Team.Player;
+            int playerPicks = playerWonLast ? basePicks : basePicks + bonusPick;
+            int aiPicks = playerWonLast ? basePicks + bonusPick : basePicks;
+
+            Debug.Log($"[MatchController] Round {State.CurrentRound}: Player {playerPicks} picks, AI {aiPicks} picks (Last winner: {State.LastRoundWinner})");
+            return (playerPicks, aiPicks);
+        }
+
+        /// <summary>
+        /// Generates AI combinations starting from Round 2.
+        /// Count is determined by config.aiCombosPerRound (default 8).
         /// Adds them to the pool for both player and AI drafting.
         /// </summary>
         private async UniTask GenerateAICombinations(int roundNumber, CancellationToken ct)
         {
-            Debug.Log($"[MatchController] Generating 4 random AI combos for Round {roundNumber}...");
+            int comboCount = config.aiCombosPerRound;
+            Debug.Log($"[MatchController] Generating {comboCount} random AI combos for Round {roundNumber}...");
 
             var newCombos = new List<ICombination>();
 
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < comboCount; i++)
             {
                 var combo = GenerateRandomCombo();
                 if (combo != null && combo.IsValid())
@@ -297,11 +325,8 @@ namespace AdaptiveDraftArena.Match
                 await GenerateAICombinations(roundNumber, cancellationToken);
             }
 
-            // Draft Phase
+            // Draft Phase (includes reveals after each pick)
             await RunDraftPhase(cancellationToken);
-
-            // Reveal Phase
-            await RunRevealPhase(cancellationToken);
 
             // Spawn Phase
             await RunSpawnPhase(cancellationToken);
@@ -318,25 +343,24 @@ namespace AdaptiveDraftArena.Match
             ChangePhase(MatchPhase.Draft);
             Debug.Log("Draft phase started");
 
-            var (playerPick, aiPick) = await draftController.StartDraftAsync(State, cancellationToken);
+            // Calculate pick counts based on last round winner
+            var (playerPickCount, aiPickCount) = CalculatePickCounts();
 
-            State.PlayerSelectedCombo = playerPick;
-            State.AISelectedCombo = aiPick;
+            // Run multi-pick draft (includes per-pick reveals)
+            var (playerPicks, aiPicks) = await draftController.StartMultiPickDraftAsync(
+                State,
+                playerPickCount,
+                aiPickCount,
+                cancellationToken);
 
-            Debug.Log($"Draft phase ended - Player: {playerPick?.DisplayName} | AI: {aiPick?.DisplayName}");
+            // Store selections in state
+            State.PlayerSelectedCombos = playerPicks;
+            State.AISelectedCombos = aiPicks;
+
+            Debug.Log($"Draft phase ended - Player: {playerPicks.Count} picks | AI: {aiPicks.Count} picks");
         }
 
-        private async UniTask RunRevealPhase(CancellationToken cancellationToken)
-        {
-            ChangePhase(MatchPhase.Reveal);
-            Debug.Log("Reveal phase started");
-
-            // Hold for 2-3 seconds to show player and AI selections
-            // The UI will be animated by RevealUI component via UIManager
-            await UniTask.Delay(System.TimeSpan.FromSeconds(2.5f), cancellationToken: cancellationToken);
-
-            Debug.Log($"Reveal phase ended - Player: {State.PlayerSelectedCombo?.DisplayName} vs AI: {State.AISelectedCombo?.DisplayName}");
-        }
+        // RunRevealPhase removed - reveals now happen during draft phase after each pick
 
         private async UniTask RunSpawnPhase(CancellationToken cancellationToken)
         {
@@ -346,24 +370,38 @@ namespace AdaptiveDraftArena.Match
             // Clear any remaining troops from previous round
             TargetingSystem.ClearAll();
 
-            // Spawn player troops
-            if (State.PlayerSelectedCombo != null)
+            // Spawn all player troops from picks
+            if (State.PlayerSelectedCombos != null && State.PlayerSelectedCombos.Count > 0)
             {
-                troopSpawner.SpawnTroops(State.PlayerSelectedCombo, Team.Player);
+                foreach (var combo in State.PlayerSelectedCombos)
+                {
+                    if (combo != null)
+                    {
+                        troopSpawner.SpawnTroops(combo, Team.Player);
+                    }
+                }
+                Debug.Log($"Spawned {State.PlayerSelectedCombos.Count} player troop groups");
             }
             else
             {
-                Debug.LogWarning("Player selected combo is null! Skipping player spawn.");
+                Debug.LogWarning("Player has no selected combos! Skipping player spawn.");
             }
 
-            // Spawn AI troops
-            if (State.AISelectedCombo != null)
+            // Spawn all AI troops from picks
+            if (State.AISelectedCombos != null && State.AISelectedCombos.Count > 0)
             {
-                troopSpawner.SpawnTroops(State.AISelectedCombo, Team.AI);
+                foreach (var combo in State.AISelectedCombos)
+                {
+                    if (combo != null)
+                    {
+                        troopSpawner.SpawnTroops(combo, Team.AI);
+                    }
+                }
+                Debug.Log($"Spawned {State.AISelectedCombos.Count} AI troop groups");
             }
             else
             {
-                Debug.LogWarning("AI selected combo is null! Skipping AI spawn.");
+                Debug.LogWarning("AI has no selected combos! Skipping AI spawn.");
             }
 
             // Brief pause to show formations
@@ -401,8 +439,9 @@ namespace AdaptiveDraftArena.Match
             // Get the latest round result
             var roundResult = State.RoundHistory[State.RoundHistory.Count - 1];
 
-            // Award the win
+            // Award the win and track winner for next round's pick calculation
             State.AwardRoundWin(roundResult.Winner);
+            State.LastRoundWinner = roundResult.Winner;
 
             // Emit round ended event
             OnRoundEnded?.Invoke(roundResult);
@@ -410,19 +449,31 @@ namespace AdaptiveDraftArena.Match
             Debug.Log($"Round {State.CurrentRound} winner: {roundResult.Winner}");
             Debug.Log($"Score - Player: {State.PlayerWins}, AI: {State.AIWins}");
 
-            // Store player and AI picks in history for pattern analysis
-            if (State.PlayerSelectedCombo != null)
+            // Store all player and AI picks in history for pattern analysis
+            if (State.PlayerSelectedCombos != null)
             {
-                State.PlayerPickHistory.Add(State.PlayerSelectedCombo);
+                foreach (var combo in State.PlayerSelectedCombos)
+                {
+                    if (combo != null)
+                    {
+                        State.PlayerPickHistory.Add(combo);
+                    }
+                }
             }
 
-            if (State.AISelectedCombo != null)
+            if (State.AISelectedCombos != null)
             {
-                State.AIPickHistory.Add(State.AISelectedCombo);
+                foreach (var combo in State.AISelectedCombos)
+                {
+                    if (combo != null)
+                    {
+                        State.AIPickHistory.Add(combo);
+                    }
+                }
             }
 
             // Generate AI counter for next round (if not final round)
-            if (State.CurrentRound < 7)
+            if (State.CurrentRound < config.maxRounds)
             {
                 var counter = await aiOrchestrator.GenerateCounterAsync(State, cancellationToken);
                 if (counter != null)

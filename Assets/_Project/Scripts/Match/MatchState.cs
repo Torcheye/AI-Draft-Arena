@@ -10,6 +10,7 @@ namespace AdaptiveDraftArena.Match
         public int PlayerWins { get; set; }
         public int AIWins { get; set; }
         public MatchPhase CurrentPhase { get; set; }
+        public Team LastRoundWinner { get; set; }
 
         // Draft pools (now supports both TroopCombination and RuntimeTroopCombination)
         public List<ICombination> BaseCombinations { get; set; }
@@ -18,8 +19,8 @@ namespace AdaptiveDraftArena.Match
         // Current round state
         public List<ICombination> PlayerDraftOptions { get; set; }
         public List<ICombination> AIDraftOptions { get; set; }
-        public ICombination PlayerSelectedCombo { get; set; }
-        public ICombination AISelectedCombo { get; set; }
+        public List<ICombination> PlayerSelectedCombos { get; set; }
+        public List<ICombination> AISelectedCombos { get; set; }
 
         // History
         public List<RoundResult> RoundHistory { get; set; }
@@ -32,11 +33,14 @@ namespace AdaptiveDraftArena.Match
             PlayerWins = 0;
             AIWins = 0;
             CurrentPhase = MatchPhase.MatchStart;
+            LastRoundWinner = Team.Player; // Default for first round (both get 2 picks)
 
             BaseCombinations = new List<ICombination>();
             AIGeneratedCombinations = new List<ICombination>();
             PlayerDraftOptions = new List<ICombination>();
             AIDraftOptions = new List<ICombination>();
+            PlayerSelectedCombos = new List<ICombination>();
+            AISelectedCombos = new List<ICombination>();
 
             RoundHistory = new List<RoundResult>();
             PlayerPickHistory = new List<ICombination>();

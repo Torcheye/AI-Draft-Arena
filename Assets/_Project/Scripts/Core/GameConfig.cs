@@ -13,8 +13,11 @@ namespace AdaptiveDraftArena.Core
         public int winsRequired = 4;
 
         [Header("Draft Settings")]
-        public float draftDuration = 15f;
+        public float draftDuration = 10f; // Per pick timer
         public int draftOptionsCount = 3;
+        public int basePicksPerRound = 2; // Base picks for both sides
+        public int bonusPickForLoser = 1; // Additional pick for last round loser
+        public float revealTotalDuration = 4.0f; // Total time for reveal animation (slideIn + hold + fadeOut)
 
         [Header("Module Pools (for AI Generation)")]
         public List<BodyModule> Bodies = new List<BodyModule>();
@@ -51,6 +54,7 @@ namespace AdaptiveDraftArena.Core
         public float disadvantageMultiplier = 0.75f;
 
         [Header("AI Settings")]
+        public int aiCombosPerRound = 8; // Number of AI combos generated per round (starting Round 2)
         public float aiGenerationTimeout = 10f;
         public bool useMockAI = false;
 

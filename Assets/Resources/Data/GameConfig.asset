@@ -16,12 +16,15 @@ MonoBehaviour:
   winsRequired: 4
   draftDuration: 15
   draftOptionsCount: 3
+  basePicksPerRound: 2
+  bonusPickForLoser: 1
   Bodies:
   - {fileID: 11400000, guid: faf7f7b413f5be14d892cef05be71a8a, type: 2}
   - {fileID: 11400000, guid: de8d6415c572d394a8007de5c0d1886e, type: 2}
   - {fileID: 11400000, guid: b60acf83295ba3046a673a0364b919dd, type: 2}
   Weapons:
   - {fileID: 11400000, guid: f962699703dff2643901101526b452a5, type: 2}
+  - {fileID: 11400000, guid: ce873ab5992d5524f86f93e77ce9f872, type: 2}
   Abilities:
   - {fileID: 11400000, guid: 1569c6f001958aa4f9f23da2aa4d6fd9, type: 2}
   - {fileID: 11400000, guid: 2ca24a6336e9adb4eb3e6de21e96efc6, type: 2}
@@ -50,6 +53,7 @@ MonoBehaviour:
   - 0
   advantageMultiplier: 1.5
   disadvantageMultiplier: 0.75
+  aiCombosPerRound: 8
   aiGenerationTimeout: 10
   useMockAI: 0
   hitFlashDuration: 0.1

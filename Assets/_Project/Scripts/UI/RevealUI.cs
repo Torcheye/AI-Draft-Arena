@@ -15,12 +15,16 @@ namespace AdaptiveDraftArena.UI
         [SerializeField] private DraftCard playerCard;
         [SerializeField] private DraftCard aiCard;
 
+        [Header("Comeback Bonus")]
+        [SerializeField] private TextMeshProUGUI comebackBonusText;
+
         [Header("Screen Control")]
         [SerializeField] private CanvasGroup canvasGroup;
 
         [Header("Animation Settings")]
         [SerializeField] private float slideInDuration = 0.5f;
         [SerializeField] private float holdDuration = 2f;
+        [SerializeField] private float comebackBonusHoldDuration = 3f; // Longer hold for comeback bonus
         [SerializeField] private float fadeOutDuration = 0.3f;
         [SerializeField] private float cardSlideDistance = 800f;
 
@@ -40,6 +44,12 @@ namespace AdaptiveDraftArena.UI
             if (aiCard != null)
             {
                 aiCardRect = aiCard.GetComponent<RectTransform>();
+            }
+
+            // Hide comeback bonus text initially
+            if (comebackBonusText != null)
+            {
+                comebackBonusText.gameObject.SetActive(false);
             }
 
             // Hide initially
@@ -75,26 +85,57 @@ namespace AdaptiveDraftArena.UI
 
         /// <summary>
         /// Shows reveal screen with player and AI selections, then auto-hides after duration.
+        /// Supports showing only one side's pick (for comeback bonus scenario).
         /// </summary>
-        public async UniTask ShowRevealAsync(ICombination playerSelection, ICombination aiSelection)
+        public async UniTask ShowRevealAsync(ICombination playerSelection, ICombination aiSelection, bool showComebackBonus = false, System.Threading.CancellationToken cancellationToken = default)
         {
-            if (playerSelection == null || aiSelection == null)
+            // At least one selection must be valid
+            if (playerSelection == null && aiSelection == null)
             {
-                Debug.LogError("RevealUI: Cannot show reveal with null selections!");
+                Debug.LogError("RevealUI: Cannot show reveal with both selections null!");
                 return;
             }
 
-            // Set card data
+            // Show/hide comeback bonus text
+            if (comebackBonusText != null)
+            {
+                if (showComebackBonus)
+                {
+                    comebackBonusText.gameObject.SetActive(true);
+                }
+                else
+                {
+                    comebackBonusText.gameObject.SetActive(false);
+                }
+            }
+
+            // Set card data (or hide if null)
             if (playerCard != null)
             {
-                playerCard.SetCombination(playerSelection);
-                playerCard.SetInteractable(false); // Not clickable during reveal
+                if (playerSelection != null)
+                {
+                    playerCard.SetCombination(playerSelection);
+                    playerCard.SetInteractable(false);
+                    playerCard.gameObject.SetActive(true);
+                }
+                else
+                {
+                    playerCard.gameObject.SetActive(false);
+                }
             }
 
             if (aiCard != null)
             {
-                aiCard.SetCombination(aiSelection);
-                aiCard.SetInteractable(false);
+                if (aiSelection != null)
+                {
+                    aiCard.SetCombination(aiSelection);
+                    aiCard.SetInteractable(false);
+                    aiCard.gameObject.SetActive(true);
+                }
+                else
+                {
+                    aiCard.gameObject.SetActive(false);
+                }
             }
 
             // Show and animate (fade in canvas group)
@@ -106,20 +147,21 @@ namespace AdaptiveDraftArena.UI
             }
 
             // Animate cards sliding in
-            await AnimateCardsIn();
+            await AnimateCardsIn(playerSelection != null, aiSelection != null, cancellationToken);
 
-            // Hold for duration
-            await UniTask.Delay(System.TimeSpan.FromSeconds(holdDuration));
+            // Hold for duration (longer for comeback bonus)
+            float actualHoldDuration = showComebackBonus ? comebackBonusHoldDuration : holdDuration;
+            await UniTask.Delay(System.TimeSpan.FromSeconds(actualHoldDuration), cancellationToken: cancellationToken);
 
             // Fade out
-            await AnimateOut();
+            await AnimateOut(cancellationToken);
 
-            Debug.Log($"RevealUI: Shown {playerSelection.DisplayName} vs {aiSelection.DisplayName}");
+            Debug.Log($"RevealUI: Shown {playerSelection?.DisplayName ?? "None"} vs {aiSelection?.DisplayName ?? "None"}");
         }
 
-        private async UniTask AnimateCardsIn()
+        private async UniTask AnimateCardsIn(bool animatePlayer, bool animateAI, System.Threading.CancellationToken cancellationToken)
         {
-            if (playerCardRect != null)
+            if (animatePlayer && playerCardRect != null && playerCard.gameObject.activeSelf)
             {
                 // Start player card off-screen left
                 var playerOriginalPos = playerCardRect.anchoredPosition;
@@ -133,7 +175,7 @@ namespace AdaptiveDraftArena.UI
                     .SetAutoKill(true);
             }
 
-            if (aiCardRect != null)
+            if (animateAI && aiCardRect != null && aiCard.gameObject.activeSelf)
             {
                 // Start AI card off-screen right
                 var aiOriginalPos = aiCardRect.anchoredPosition;
@@ -148,10 +190,10 @@ namespace AdaptiveDraftArena.UI
             }
 
             // Wait for animations to complete
-            await UniTask.Delay(System.TimeSpan.FromSeconds(slideInDuration));
+            await UniTask.Delay(System.TimeSpan.FromSeconds(slideInDuration), cancellationToken: cancellationToken);
         }
 
-        private async UniTask AnimateOut()
+        private async UniTask AnimateOut(System.Threading.CancellationToken cancellationToken)
         {
             if (canvasGroup == null) return;
 
@@ -163,7 +205,7 @@ namespace AdaptiveDraftArena.UI
                 .SetLink(gameObject)
                 .SetAutoKill(true);
 
-            await UniTask.Delay(System.TimeSpan.FromSeconds(fadeOutDuration));
+            await UniTask.Delay(System.TimeSpan.FromSeconds(fadeOutDuration), cancellationToken: cancellationToken);
         }
 
         /// <summary>
@@ -201,6 +243,21 @@ namespace AdaptiveDraftArena.UI
         /// </summary>
         public void ResetUI()
         {
+            if (playerCard != null)
+            {
+                playerCard.gameObject.SetActive(true);
+            }
+
+            if (aiCard != null)
+            {
+                aiCard.gameObject.SetActive(true);
+            }
+
+            if (comebackBonusText != null)
+            {
+                comebackBonusText.gameObject.SetActive(false);
+            }
+
             if (playerCardRect != null)
             {
                 playerCardRect.anchoredPosition = Vector2.zero;
