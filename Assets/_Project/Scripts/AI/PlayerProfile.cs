@@ -31,12 +31,12 @@ namespace AdaptiveDraftArena.AI
         public float avgSpeed;
 
         // Recent picks (last 3)
-        public List<TroopCombination> recentPicks = new List<TroopCombination>();
+        public List<ICombination> recentPicks = new List<ICombination>();
 
         // Phase 3: Win/Loss tracking for Mastery difficulty
-        public List<TroopCombination> winningPicks = new List<TroopCombination>();      // Player picks that won
-        public List<TroopCombination> losingPicks = new List<TroopCombination>();       // Player picks that lost
-        public List<TroopCombination> successfulCounters = new List<TroopCombination>(); // AI picks that beat player
+        public List<ICombination> winningPicks = new List<ICombination>();      // Player picks that won
+        public List<ICombination> losingPicks = new List<ICombination>();       // Player picks that lost
+        public List<ICombination> successfulCounters = new List<ICombination>(); // AI picks that beat player
 
         // Track which rounds have been analyzed to prevent double-counting
         internal HashSet<int> analyzedRounds = new HashSet<int>();

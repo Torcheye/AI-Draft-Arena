@@ -44,7 +44,7 @@ namespace AdaptiveDraftArena.Combat
             return cachedBattlefieldBounds;
         }
 
-        public List<TroopController> SpawnTroops(TroopCombination combination, Team team, Transform parent = null)
+        public List<TroopController> SpawnTroops(ICombination combination, Team team, Transform parent = null)
         {
             if (combination == null)
             {
@@ -54,7 +54,7 @@ namespace AdaptiveDraftArena.Combat
 
             if (!combination.IsValid())
             {
-                Debug.LogError($"TroopSpawner: Invalid combination {combination.name}!");
+                Debug.LogError($"TroopSpawner: Invalid combination {combination.DisplayName}!");
                 return EmptyList;
             }
 
@@ -104,7 +104,7 @@ namespace AdaptiveDraftArena.Combat
             return spawnedTroops;
         }
 
-        private TroopController SpawnSingleTroop(TroopCombination combination, Team team, Vector3 position, Transform parent)
+        private TroopController SpawnSingleTroop(ICombination combination, Team team, Vector3 position, Transform parent)
         {
             // Instantiate from prefab
             var troopObj = Instantiate(troopPrefab, position, Quaternion.identity, parent);

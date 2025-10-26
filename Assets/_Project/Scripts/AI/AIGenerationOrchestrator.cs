@@ -43,7 +43,7 @@ namespace AdaptiveDraftArena.AI
         /// Phase 3: Passes current round for progressive difficulty.
         /// FIXED: Uses RoundHistory.Count + 1 for unambiguous round tracking.
         /// </summary>
-        public async UniTask<TroopCombination> GenerateCounterAsync(
+        public async UniTask<ICombination> GenerateCounterAsync(
             MatchState state,
             CancellationToken ct)
         {

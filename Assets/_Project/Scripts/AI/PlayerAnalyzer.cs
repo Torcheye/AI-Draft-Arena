@@ -186,8 +186,8 @@ namespace AdaptiveDraftArena.AI
                     continue;
                 }
 
-                TroopCombination playerPick = state.PlayerPickHistory[pickIndex];
-                TroopCombination aiPick = pickIndex < state.AIPickHistory.Count ? state.AIPickHistory[pickIndex] : null;
+                ICombination playerPick = state.PlayerPickHistory[pickIndex];
+                ICombination aiPick = pickIndex < state.AIPickHistory.Count ? state.AIPickHistory[pickIndex] : null;
 
                 if (playerPick == null)
                     continue; // Skip if we don't have player pick data

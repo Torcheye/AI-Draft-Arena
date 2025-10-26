@@ -34,7 +34,7 @@ namespace AdaptiveDraftArena.UI
         [SerializeField] private float hoverScale = 1.05f;
         [SerializeField] private float hoverDuration = 0.2f;
 
-        private TroopCombination currentCombination;
+        private ICombination currentCombination;
         private bool isSelected;
         private Tweener scaleTween;
         private Tweener glowTween;
@@ -89,7 +89,7 @@ namespace AdaptiveDraftArena.UI
         /// <summary>
         /// Populates the card with troop combination data.
         /// </summary>
-        public void SetCombination(TroopCombination combination)
+        public void SetCombination(ICombination combination)
         {
             if (combination == null)
             {
@@ -250,7 +250,7 @@ namespace AdaptiveDraftArena.UI
             OnCardClicked?.Invoke(this);
         }
 
-        public TroopCombination GetCombination()
+        public ICombination GetCombination()
         {
             return currentCombination;
         }

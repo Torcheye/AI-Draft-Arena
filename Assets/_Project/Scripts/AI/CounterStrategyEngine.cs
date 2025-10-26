@@ -38,9 +38,9 @@ namespace AdaptiveDraftArena.AI
         /// Phase 2: Builds dynamic combos OR picks from pool (whichever scores higher).
         /// Phase 3: Uses difficulty-based strategies (Exploration → Adaptation → Mastery).
         /// </summary>
-        public TroopCombination GenerateCounter(
+        public ICombination GenerateCounter(
             PlayerProfile profile,
-            List<TroopCombination> availableCombos,
+            List<ICombination> availableCombos,
             int currentRound = 1)
         {
             if (availableCombos == null || availableCombos.Count == 0)
@@ -86,14 +86,14 @@ namespace AdaptiveDraftArena.AI
         /// Exploration phase (Rounds 1-2): Simple, readable counters to test player.
         /// Uses only element advantage for easy-to-understand AI behavior.
         /// </summary>
-        private TroopCombination GenerateExplorationCounter(
+        private ICombination GenerateExplorationCounter(
             PlayerProfile profile,
-            List<TroopCombination> availableCombos)
+            List<ICombination> availableCombos)
         {
             Debug.Log("[CounterStrategyEngine] Exploration mode: Simple element counter");
 
             // Score using only element advantage (Phase 1 behavior)
-            var scoredCombos = new List<(TroopCombination combo, int score)>();
+            var scoredCombos = new List<(ICombination combo, int score)>();
 
             foreach (var combo in availableCombos)
             {
@@ -127,14 +127,14 @@ namespace AdaptiveDraftArena.AI
         /// Adaptation phase (Rounds 3-5): Multi-factor counters based on confirmed patterns.
         /// Uses full 5-layer scoring system (Phase 2 behavior).
         /// </summary>
-        private TroopCombination GenerateAdaptiveCounter(
+        private ICombination GenerateAdaptiveCounter(
             PlayerProfile profile,
-            List<TroopCombination> availableCombos)
+            List<ICombination> availableCombos)
         {
             Debug.Log("[CounterStrategyEngine] Adaptation mode: Multi-factor strategic counter");
 
             // Phase 2: Try building a dynamic combo
-            TroopCombination dynamicCombo = null;
+            ICombination dynamicCombo = null;
             int dynamicScore = 0;
 
             if (CanBuildDynamicCombo())
@@ -148,7 +148,7 @@ namespace AdaptiveDraftArena.AI
             }
 
             // Score all available combos from pool
-            var scoredCombos = new List<(TroopCombination combo, int score)>();
+            var scoredCombos = new List<(ICombination combo, int score)>();
 
             foreach (var combo in availableCombos)
             {
@@ -205,9 +205,9 @@ namespace AdaptiveDraftArena.AI
         /// Analyzes what worked against player before and generates hard counters.
         /// FIXED: Added null validation for lastSuccessful counter.
         /// </summary>
-        private TroopCombination GenerateMasteryCounter(
+        private ICombination GenerateMasteryCounter(
             PlayerProfile profile,
-            List<TroopCombination> availableCombos)
+            List<ICombination> availableCombos)
         {
             Debug.Log("[CounterStrategyEngine] Mastery mode: Sophisticated counter using history");
 
@@ -227,7 +227,7 @@ namespace AdaptiveDraftArena.AI
                 }
 
                 // Look for combos with similar characteristics (same element, body role, or amount)
-                var similarCombos = new List<(TroopCombination combo, int similarityScore)>();
+                var similarCombos = new List<(ICombination combo, int similarityScore)>();
 
                 foreach (var combo in availableCombos)
                 {
@@ -294,9 +294,9 @@ namespace AdaptiveDraftArena.AI
         /// <summary>
         /// Builds a new counter combination dynamically by selecting strategic modules.
         /// Phase 2 feature: AI creates NEW combos instead of just picking from pool.
-        /// NOTE: Currently disabled due to ScriptableObject memory leak. Enable in Phase 3 with proper pooling.
+        /// UPDATED: Now uses RuntimeTroopCombination (no more memory leak).
         /// </summary>
-        private TroopCombination BuildDynamicCounter(PlayerProfile profile)
+        private ICombination BuildDynamicCounter(PlayerProfile profile)
         {
             // Pick strategic modules
             var counterElement = PickCounterElement(profile);
@@ -313,14 +313,16 @@ namespace AdaptiveDraftArena.AI
                 return null;
             }
 
-            // Create combination
-            var combo = ScriptableObject.CreateInstance<TroopCombination>();
-            combo.body = counterBody;
-            combo.weapon = counterWeapon;
-            combo.ability = counterAbility;
-            combo.effect = counterElement;
-            combo.amount = amount;
-            combo.isAIGenerated = true;
+            // Create combination using RuntimeTroopCombination (GC-friendly)
+            var combo = new RuntimeTroopCombination
+            {
+                body = counterBody,
+                weapon = counterWeapon,
+                ability = counterAbility,
+                effect = counterElement,
+                amount = amount,
+                isAIGenerated = true
+            };
 
             return combo;
         }
@@ -456,7 +458,7 @@ namespace AdaptiveDraftArena.AI
         /// Phase 1: Element counter only (+50 points).
         /// Phase 2: Multi-layer scoring (Element 30, Range 25, Stats 20, Amount 15, Ability 10).
         /// </summary>
-        private int ScoreCombo(TroopCombination combo, PlayerProfile profile)
+        private int ScoreCombo(ICombination combo, PlayerProfile profile)
         {
             int score = 0;
 
@@ -487,7 +489,7 @@ namespace AdaptiveDraftArena.AI
         /// Returns true if combo has the element advantage against player's most-used element.
         /// Fire < Water < Nature < Fire
         /// </summary>
-        private bool CountersElement(TroopCombination combo, PlayerProfile profile)
+        private bool CountersElement(ICombination combo, PlayerProfile profile)
         {
             if (combo.effect == null || string.IsNullOrEmpty(profile.mostUsedElement))
                 return false;
@@ -507,7 +509,7 @@ namespace AdaptiveDraftArena.AI
         /// Returns true if combo has range advantage against player's preferred range.
         /// Melee → Counter with Ranged, Ranged → Counter with Fast Melee
         /// </summary>
-        private bool CountersRange(TroopCombination combo, PlayerProfile profile)
+        private bool CountersRange(ICombination combo, PlayerProfile profile)
         {
             if (combo.body == null)
                 return false;
@@ -530,7 +532,7 @@ namespace AdaptiveDraftArena.AI
         /// Returns true if combo counters player's stat distribution.
         /// High HP → Counter with DPS, High Damage + Low HP → Counter with Tank
         /// </summary>
-        private bool CountersStats(TroopCombination combo, PlayerProfile profile)
+        private bool CountersStats(ICombination combo, PlayerProfile profile)
         {
             if (combo.weapon == null || combo.body == null)
                 return false;
@@ -555,7 +557,7 @@ namespace AdaptiveDraftArena.AI
         /// Returns true if combo counters player's amount preference.
         /// Swarm → Counter with Elite/AOE, Elite → Counter with Swarm
         /// </summary>
-        private bool CountersAmount(TroopCombination combo, PlayerProfile profile)
+        private bool CountersAmount(ICombination combo, PlayerProfile profile)
         {
             bool playerUsesSwarm = profile.PrefersSwarm(); // avgAmount >= 3
 
@@ -582,7 +584,7 @@ namespace AdaptiveDraftArena.AI
         /// Returns true if combo has good synergy between modules.
         /// Tank + Regeneration, DPS + Berserk, Swarm + Shield Aura, etc.
         /// </summary>
-        private bool HasAbilitySynergy(TroopCombination combo)
+        private bool HasAbilitySynergy(ICombination combo)
         {
             if (combo.ability == null || combo.body == null)
                 return false;

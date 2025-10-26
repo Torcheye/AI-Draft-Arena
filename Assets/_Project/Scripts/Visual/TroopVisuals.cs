@@ -14,7 +14,7 @@ namespace AdaptiveDraftArena.Visual
         [SerializeField] private Transform particleAnchor;
 
         private GameObject currentAuraEffect;
-        private TroopCombination combination;
+        private ICombination combination;
         private Renderer[] bodyRenderers;
         private Renderer[] weaponRenderers;
         private MaterialPropertyBlock propertyBlock;
@@ -22,7 +22,7 @@ namespace AdaptiveDraftArena.Visual
         private Coroutine flashCoroutine;
         private static readonly int ColorProperty = Shader.PropertyToID("_Color");
 
-        public void Compose(TroopCombination troopCombination)
+        public void Compose(ICombination troopCombination)
         {
             combination = troopCombination;
 

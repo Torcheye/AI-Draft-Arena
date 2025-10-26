@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
@@ -182,9 +183,119 @@ namespace AdaptiveDraftArena.Match
             Debug.Log($"Match ended! Winner: {winner}");
         }
 
+        /// <summary>
+        /// Generates 4 random AI combinations starting from Round 2.
+        /// Adds them to the pool for both player and AI drafting.
+        /// </summary>
+        private async UniTask GenerateAICombinations(int roundNumber, CancellationToken ct)
+        {
+            Debug.Log($"[MatchController] Generating 4 random AI combos for Round {roundNumber}...");
+
+            var newCombos = new List<ICombination>();
+
+            for (int i = 0; i < 4; i++)
+            {
+                var combo = GenerateRandomCombo();
+                if (combo != null && combo.IsValid())
+                {
+                    var runtimeCombo = combo as RuntimeTroopCombination;
+                    if (runtimeCombo != null)
+                    {
+                        runtimeCombo.generationRound = roundNumber;
+                    }
+                    newCombos.Add(combo);
+                    Debug.Log($"[MatchController] Generated: {combo.DisplayName}");
+                }
+                else
+                {
+                    Debug.LogWarning($"[MatchController] Failed to generate valid combo #{i + 1}");
+                }
+            }
+
+            // Add to pool
+            State.AIGeneratedCombinations.AddRange(newCombos);
+
+            // Update bags in DraftController (so new combos are immediately available)
+            // Note: Bags will be updated when DraftController's GenerateDraftOptions is called
+
+            Debug.Log($"[MatchController] Added {newCombos.Count} combos to pool (total: {State.GetFullDraftPool().Count})");
+
+            // No delay - generation is instant
+            await UniTask.Yield(ct);
+        }
+
+        /// <summary>
+        /// Generates a single random troop combination by mixing modules.
+        /// Truly random (not strategic) - creates variety and discovery.
+        /// Validates module pools and ensures no null references.
+        /// </summary>
+        private RuntimeTroopCombination GenerateRandomCombo()
+        {
+            // Validate module pools are not empty and contain valid (non-null) entries
+            if (config.Bodies.Count == 0 || config.Weapons.Count == 0 ||
+                config.Abilities.Count == 0 || config.Effects.Count == 0)
+            {
+                Debug.LogError("[MatchController] Module pools are empty! Cannot generate random combo.");
+                return null;
+            }
+
+            // Pick random modules (with retry if null)
+            BodyModule body = null;
+            WeaponModule weapon = null;
+            AbilityModule ability = null;
+            EffectModule effect = null;
+
+            // Try up to 5 times to get valid modules
+            for (int attempt = 0; attempt < 5; attempt++)
+            {
+                body = config.Bodies[UnityEngine.Random.Range(0, config.Bodies.Count)];
+                weapon = config.Weapons[UnityEngine.Random.Range(0, config.Weapons.Count)];
+                ability = config.Abilities[UnityEngine.Random.Range(0, config.Abilities.Count)];
+                effect = config.Effects[UnityEngine.Random.Range(0, config.Effects.Count)];
+
+                // If all are valid, break
+                if (body != null && weapon != null && ability != null && effect != null)
+                    break;
+
+                if (attempt == 4)
+                {
+                    Debug.LogError("[MatchController] Module pools contain null entries! Fix GameConfig.");
+                    return null;
+                }
+            }
+
+            // Create combo
+            var combo = new RuntimeTroopCombination
+            {
+                body = body,
+                weapon = weapon,
+                ability = ability,
+                effect = effect,
+                amount = PickRandomAmount(),
+                isAIGenerated = true
+            };
+
+            return combo;
+        }
+
+        /// <summary>
+        /// Picks a random amount from valid values (1, 2, 3, 5).
+        /// </summary>
+        private int PickRandomAmount()
+        {
+            int[] validAmounts = { 1, 2, 3, 5 };
+            return validAmounts[UnityEngine.Random.Range(0, validAmounts.Length)];
+        }
+
         private async UniTask RunRound(int roundNumber, CancellationToken cancellationToken)
         {
             Debug.Log($"=== Round {roundNumber} Start ===");
+
+            // Generate AI combos (starting from Round 2)
+            if (roundNumber >= 2)
+            {
+                await GenerateAICombinations(roundNumber, cancellationToken);
+            }
 
             // Draft Phase
             await RunDraftPhase(cancellationToken);

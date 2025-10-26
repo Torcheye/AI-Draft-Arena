@@ -14,18 +14,18 @@ namespace AdaptiveDraftArena.Draft
     {
         public float DraftTimeRemaining { get; private set; }
         public bool IsDraftActive { get; private set; }
-        public List<TroopCombination> CurrentPlayerOptions { get; private set; }
-        public List<TroopCombination> CurrentAIOptions { get; private set; }
-        public TroopCombination PlayerSelection { get; private set; }
-        public TroopCombination AISelection { get; private set; }
+        public List<ICombination> CurrentPlayerOptions { get; private set; }
+        public List<ICombination> CurrentAIOptions { get; private set; }
+        public ICombination PlayerSelection { get; private set; }
+        public ICombination AISelection { get; private set; }
 
         // Events
-        public event Action<List<TroopCombination>> OnPlayerOptionsGenerated;
+        public event Action<List<ICombination>> OnPlayerOptionsGenerated;
         public event Action<float> OnTimerUpdated; // remaining time
         public event Action OnTimerWarning; // 5 seconds warning
-        public event Action<TroopCombination> OnPlayerSelected;
-        public event Action<TroopCombination> OnAISelected;
-        public event Action<TroopCombination, TroopCombination> OnDraftCompleted; // player, AI
+        public event Action<ICombination> OnPlayerSelected;
+        public event Action<ICombination> OnAISelected;
+        public event Action<ICombination, ICombination> OnDraftCompleted; // player, AI
 
         private GameConfig config;
         private MatchState matchState;
@@ -34,10 +34,14 @@ namespace AdaptiveDraftArena.Draft
         private bool aiHasSelected;
         private bool warningTriggered;
 
+        // 7-bag randomization for player and AI draft options
+        private CombinationBag playerBag;
+        private CombinationBag aiBag;
+
         private void Awake()
         {
-            CurrentPlayerOptions = new List<TroopCombination>();
-            CurrentAIOptions = new List<TroopCombination>();
+            CurrentPlayerOptions = new List<ICombination>();
+            CurrentAIOptions = new List<ICombination>();
         }
 
         private void Start()
@@ -59,7 +63,7 @@ namespace AdaptiveDraftArena.Draft
             }
         }
 
-        public async UniTask<(TroopCombination playerPick, TroopCombination aiPick)> StartDraftAsync(
+        public async UniTask<(ICombination playerPick, ICombination aiPick)> StartDraftAsync(
             MatchState state,
             CancellationToken cancellationToken)
         {
@@ -105,13 +109,71 @@ namespace AdaptiveDraftArena.Draft
                 return;
             }
 
-            // Generate player options (3 random combinations)
-            CurrentPlayerOptions = GetRandomCombinations(fullPool, config.draftOptionsCount);
-            matchState.PlayerDraftOptions = new List<TroopCombination>(CurrentPlayerOptions);
+            // Initialize bags if null (first round)
+            if (playerBag == null)
+            {
+                playerBag = new CombinationBag(fullPool);
+                Debug.Log("[DraftController] Initialized player bag");
+            }
+            else
+            {
+                // Update bag with new AI-generated combos (if any were added this round)
+                var newCombos = matchState.AIGeneratedCombinations;
+                if (newCombos != null && newCombos.Count > 0)
+                {
+                    // Only add the newly generated combos (not all of them)
+                    // This is a simplified approach - in production you'd track which are new
+                    var baseCombosCount = matchState.BaseCombinations.Count;
+                    var expectedNewCombos = fullPool.Count - baseCombosCount;
 
-            // Generate AI options with guaranteed counter inclusion
+                    // Add new combos to player bag
+                    var combosToAdd = new List<ICombination>();
+                    for (int i = baseCombosCount; i < fullPool.Count; i++)
+                    {
+                        combosToAdd.Add(fullPool[i]);
+                    }
+
+                    if (combosToAdd.Count > 0)
+                    {
+                        playerBag.AddToPool(combosToAdd);
+                    }
+                }
+            }
+
+            if (aiBag == null)
+            {
+                aiBag = new CombinationBag(fullPool);
+                Debug.Log("[DraftController] Initialized AI bag");
+            }
+            else
+            {
+                // Update bag with new AI-generated combos (if any were added this round)
+                var newCombos = matchState.AIGeneratedCombinations;
+                if (newCombos != null && newCombos.Count > 0)
+                {
+                    var baseCombosCount = matchState.BaseCombinations.Count;
+
+                    // Add new combos to AI bag
+                    var combosToAdd = new List<ICombination>();
+                    for (int i = baseCombosCount; i < fullPool.Count; i++)
+                    {
+                        combosToAdd.Add(fullPool[i]);
+                    }
+
+                    if (combosToAdd.Count > 0)
+                    {
+                        aiBag.AddToPool(combosToAdd);
+                    }
+                }
+            }
+
+            // Draw player options from bag (pure 7-bag randomization)
+            CurrentPlayerOptions = playerBag.Draw(config.draftOptionsCount);
+            matchState.PlayerDraftOptions = new List<ICombination>(CurrentPlayerOptions);
+
+            // Draw AI options from bag (with guaranteed counter if available)
             CurrentAIOptions = GenerateAIOptions(fullPool, config.draftOptionsCount);
-            matchState.AIDraftOptions = new List<TroopCombination>(CurrentAIOptions);
+            matchState.AIDraftOptions = new List<ICombination>(CurrentAIOptions);
 
             OnPlayerOptionsGenerated?.Invoke(CurrentPlayerOptions);
 
@@ -120,66 +182,35 @@ namespace AdaptiveDraftArena.Draft
 
         /// <summary>
         /// Generates AI draft options, guaranteeing the latest generated counter is included.
+        /// Uses 7-bag algorithm for variety, but inserts strategic counter manually.
         /// </summary>
-        private List<TroopCombination> GenerateAIOptions(List<TroopCombination> pool, int count)
+        private List<ICombination> GenerateAIOptions(List<ICombination> pool, int count)
         {
             // Check if we have a recently generated counter
-            TroopCombination latestCounter = null;
+            ICombination latestCounter = null;
             if (matchState.AIGeneratedCombinations != null && matchState.AIGeneratedCombinations.Count > 0)
             {
                 latestCounter = matchState.AIGeneratedCombinations[matchState.AIGeneratedCombinations.Count - 1];
                 Debug.Log($"[DraftController] Including latest AI counter in options: {latestCounter.DisplayName}");
             }
 
-            // If no counter generated yet, just return random options
+            // If no counter generated yet, just use bag
             if (latestCounter == null)
             {
-                return GetRandomCombinations(pool, count);
+                return aiBag.Draw(count);
             }
 
-            // Build AI options: 1 guaranteed counter + (count - 1) random
-            var aiOptions = new List<TroopCombination> { latestCounter };
+            // Build AI options: 1 guaranteed counter + (count - 1) from bag
+            var aiOptions = new List<ICombination> { latestCounter };
 
-            // Get remaining random options (excluding the counter to avoid duplicates)
-            var poolWithoutCounter = pool.Where(c => c != latestCounter).ToList();
-            var randomOptions = GetRandomCombinations(poolWithoutCounter, count - 1);
-
-            aiOptions.AddRange(randomOptions);
+            // Get remaining options from bag (bag automatically avoids recent picks)
+            var bagOptions = aiBag.Draw(count - 1);
+            aiOptions.AddRange(bagOptions);
 
             return aiOptions;
         }
 
-        private List<TroopCombination> GetRandomCombinations(List<TroopCombination> pool, int count)
-        {
-            if (pool.Count <= count)
-            {
-                // If pool is smaller than requested count, return shuffled copy using Fisher-Yates
-                var result = new List<TroopCombination>(pool);
-                for (var i = result.Count - 1; i > 0; i--)
-                {
-                    var j = UnityEngine.Random.Range(0, i + 1);
-                    (result[i], result[j]) = (result[j], result[i]);
-                }
-                return result;
-            }
-
-            // Get random unique combinations using HashSet for O(1) lookups
-            var selected = new List<TroopCombination>(count);
-            var usedIndices = new HashSet<int>();
-
-            while (selected.Count < count)
-            {
-                var index = UnityEngine.Random.Range(0, pool.Count);
-                if (usedIndices.Add(index))
-                {
-                    selected.Add(pool[index]);
-                }
-            }
-
-            return selected;
-        }
-
-        private async UniTask<(TroopCombination playerPick, TroopCombination aiPick)> RunDraftLoop(CancellationToken cancellationToken)
+        private async UniTask<(ICombination playerPick, ICombination aiPick)> RunDraftLoop(CancellationToken cancellationToken)
         {
             // AI selects immediately (simple random for now)
             PerformAISelection();
@@ -219,7 +250,7 @@ namespace AdaptiveDraftArena.Draft
             return (PlayerSelection, AISelection);
         }
 
-        public void SelectCombination(TroopCombination combination)
+        public void SelectCombination(ICombination combination)
         {
             if (!IsDraftActive)
             {

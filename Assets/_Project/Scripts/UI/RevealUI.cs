@@ -76,7 +76,7 @@ namespace AdaptiveDraftArena.UI
         /// <summary>
         /// Shows reveal screen with player and AI selections, then auto-hides after duration.
         /// </summary>
-        public async UniTask ShowRevealAsync(TroopCombination playerSelection, TroopCombination aiSelection)
+        public async UniTask ShowRevealAsync(ICombination playerSelection, ICombination aiSelection)
         {
             if (playerSelection == null || aiSelection == null)
             {

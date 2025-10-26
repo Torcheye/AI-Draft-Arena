@@ -11,20 +11,20 @@ namespace AdaptiveDraftArena.Match
         public int AIWins { get; set; }
         public MatchPhase CurrentPhase { get; set; }
 
-        // Draft pools
-        public List<TroopCombination> BaseCombinations { get; set; }
-        public List<TroopCombination> AIGeneratedCombinations { get; set; }
+        // Draft pools (now supports both TroopCombination and RuntimeTroopCombination)
+        public List<ICombination> BaseCombinations { get; set; }
+        public List<ICombination> AIGeneratedCombinations { get; set; }
 
         // Current round state
-        public List<TroopCombination> PlayerDraftOptions { get; set; }
-        public List<TroopCombination> AIDraftOptions { get; set; }
-        public TroopCombination PlayerSelectedCombo { get; set; }
-        public TroopCombination AISelectedCombo { get; set; }
+        public List<ICombination> PlayerDraftOptions { get; set; }
+        public List<ICombination> AIDraftOptions { get; set; }
+        public ICombination PlayerSelectedCombo { get; set; }
+        public ICombination AISelectedCombo { get; set; }
 
         // History
         public List<RoundResult> RoundHistory { get; set; }
-        public List<TroopCombination> PlayerPickHistory { get; set; }
-        public List<TroopCombination> AIPickHistory { get; set; }
+        public List<ICombination> PlayerPickHistory { get; set; }
+        public List<ICombination> AIPickHistory { get; set; }
 
         public MatchState()
         {
@@ -33,14 +33,14 @@ namespace AdaptiveDraftArena.Match
             AIWins = 0;
             CurrentPhase = MatchPhase.MatchStart;
 
-            BaseCombinations = new List<TroopCombination>();
-            AIGeneratedCombinations = new List<TroopCombination>();
-            PlayerDraftOptions = new List<TroopCombination>();
-            AIDraftOptions = new List<TroopCombination>();
+            BaseCombinations = new List<ICombination>();
+            AIGeneratedCombinations = new List<ICombination>();
+            PlayerDraftOptions = new List<ICombination>();
+            AIDraftOptions = new List<ICombination>();
 
             RoundHistory = new List<RoundResult>();
-            PlayerPickHistory = new List<TroopCombination>();
-            AIPickHistory = new List<TroopCombination>();
+            PlayerPickHistory = new List<ICombination>();
+            AIPickHistory = new List<ICombination>();
         }
 
         public bool IsMatchOver()
@@ -63,9 +63,9 @@ namespace AdaptiveDraftArena.Match
                 AIWins++;
         }
 
-        public List<TroopCombination> GetFullDraftPool()
+        public List<ICombination> GetFullDraftPool()
         {
-            var pool = new List<TroopCombination>();
+            var pool = new List<ICombination>();
             pool.AddRange(BaseCombinations);
             pool.AddRange(AIGeneratedCombinations);
             return pool;

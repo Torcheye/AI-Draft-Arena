@@ -142,7 +142,7 @@ namespace AdaptiveDraftArena.UI
         /// <summary>
         /// Displays draft options on cards.
         /// </summary>
-        private void DisplayDraftOptions(List<TroopCombination> options)
+        private void DisplayDraftOptions(List<ICombination> options)
         {
             if (options == null || options.Count == 0)
             {
@@ -221,7 +221,7 @@ namespace AdaptiveDraftArena.UI
         /// <summary>
         /// Handles player selection feedback.
         /// </summary>
-        private void OnPlayerSelected(TroopCombination selected)
+        private void OnPlayerSelected(ICombination selected)
         {
             if (selectedCard != null)
             {
@@ -249,7 +249,7 @@ namespace AdaptiveDraftArena.UI
         /// <summary>
         /// Handles draft completion and fades out screen.
         /// </summary>
-        private void OnDraftCompleted(TroopCombination playerPick, TroopCombination aiPick)
+        private void OnDraftCompleted(ICombination playerPick, ICombination aiPick)
         {
             Debug.Log($"DraftUI: Draft completed - Fading out screen");
             HideDraftScreen();

@@ -8,7 +8,7 @@ namespace AdaptiveDraftArena.Combat
     public class TroopController : MonoBehaviour
     {
         // Module composition
-        public TroopCombination Combination { get; private set; }
+        public ICombination Combination { get; private set; }
         public Team Team { get; private set; }
 
         // Components
@@ -46,7 +46,7 @@ namespace AdaptiveDraftArena.Combat
             if (AbilityExecutor == null) AbilityExecutor = gameObject.AddComponent<AbilityExecutor>();
         }
 
-        public void Initialize(TroopCombination combination, Team team, Vector3 spawnPosition)
+        public void Initialize(ICombination combination, Team team, Vector3 spawnPosition)
         {
             if (isInitialized)
             {
