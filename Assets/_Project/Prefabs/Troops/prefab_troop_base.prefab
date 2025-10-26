@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 4470168066622075992}
   - component: {fileID: 4829217048164993466}
   - component: {fileID: 3350134947932665111}
+  - component: {fileID: 1814420061186361361}
   m_Layer: 0
   m_Name: prefab_troop_base
   m_TagString: Untagged
@@ -31,7 +32,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 8003328711077810457}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &4470168066622075992
@@ -96,3 +98,137 @@ CapsuleCollider:
   m_Height: 1
   m_Direction: 1
   m_Center: {x: 0, y: 0.5, z: 0}
+--- !u!114 &1814420061186361361
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2429011871242414823}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3be1662e931d8f04a843ab57e37c1443, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AdaptiveDraftArena.Visual.TroopVisuals
+  bodyModel: {fileID: 0}
+  weaponModel: {fileID: 0}
+  weaponSocket: {fileID: 0}
+  particleAnchor: {fileID: 0}
+  healthBarUI: {fileID: 5998747429713416271}
+--- !u!1001 &1857596310164138785
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 8027685891639795663}
+    m_Modifications:
+    - target: {fileID: 5402163417625918318, guid: aa2b116edda63234883636f41ba40259, type: 3}
+      propertyPath: worldOffset.y
+      value: 2.3
+      objectReference: {fileID: 0}
+    - target: {fileID: 7608611996867325812, guid: aa2b116edda63234883636f41ba40259, type: 3}
+      propertyPath: m_Name
+      value: HealthBarCanvas
+      objectReference: {fileID: 0}
+    - target: {fileID: 8563043903347014200, guid: aa2b116edda63234883636f41ba40259, type: 3}
+      propertyPath: m_Pivot.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 8563043903347014200, guid: aa2b116edda63234883636f41ba40259, type: 3}
+      propertyPath: m_Pivot.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 8563043903347014200, guid: aa2b116edda63234883636f41ba40259, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8563043903347014200, guid: aa2b116edda63234883636f41ba40259, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8563043903347014200, guid: aa2b116edda63234883636f41ba40259, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8563043903347014200, guid: aa2b116edda63234883636f41ba40259, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8563043903347014200, guid: aa2b116edda63234883636f41ba40259, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 40
+      objectReference: {fileID: 0}
+    - target: {fileID: 8563043903347014200, guid: aa2b116edda63234883636f41ba40259, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 8563043903347014200, guid: aa2b116edda63234883636f41ba40259, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8563043903347014200, guid: aa2b116edda63234883636f41ba40259, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8563043903347014200, guid: aa2b116edda63234883636f41ba40259, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8563043903347014200, guid: aa2b116edda63234883636f41ba40259, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8563043903347014200, guid: aa2b116edda63234883636f41ba40259, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8563043903347014200, guid: aa2b116edda63234883636f41ba40259, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8563043903347014200, guid: aa2b116edda63234883636f41ba40259, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8563043903347014200, guid: aa2b116edda63234883636f41ba40259, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8563043903347014200, guid: aa2b116edda63234883636f41ba40259, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 2.31
+      objectReference: {fileID: 0}
+    - target: {fileID: 8563043903347014200, guid: aa2b116edda63234883636f41ba40259, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8563043903347014200, guid: aa2b116edda63234883636f41ba40259, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8563043903347014200, guid: aa2b116edda63234883636f41ba40259, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: aa2b116edda63234883636f41ba40259, type: 3}
+--- !u!114 &5998747429713416271 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5402163417625918318, guid: aa2b116edda63234883636f41ba40259, type: 3}
+  m_PrefabInstance: {fileID: 1857596310164138785}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f292e4e843fc04409226b6e8076f735, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AdaptiveDraftArena.Visual.HealthBarUI
+--- !u!224 &8003328711077810457 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 8563043903347014200, guid: aa2b116edda63234883636f41ba40259, type: 3}
+  m_PrefabInstance: {fileID: 1857596310164138785}
+  m_PrefabAsset: {fileID: 0}

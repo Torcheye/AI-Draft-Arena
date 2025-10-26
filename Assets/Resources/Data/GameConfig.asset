@@ -14,10 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AdaptiveDraftArena.Core.GameConfig
   maxRounds: 7
   winsRequired: 4
-  draftDuration: 15
+  draftDuration: 10
   draftOptionsCount: 3
   basePicksPerRound: 2
   bonusPickForLoser: 1
+  revealTotalDuration: 3
   Bodies:
   - {fileID: 11400000, guid: faf7f7b413f5be14d892cef05be71a8a, type: 2}
   - {fileID: 11400000, guid: de8d6415c572d394a8007de5c0d1886e, type: 2}

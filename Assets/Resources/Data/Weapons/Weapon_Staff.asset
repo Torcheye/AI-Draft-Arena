@@ -10,20 +10,20 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fbadecd944d055642bbf5b93df9209c7, type: 3}
-  m_Name: Weapon_Hammer
+  m_Name: Weapon_Staff
   m_EditorClassIdentifier: Assembly-CSharp::AdaptiveDraftArena.Modules.WeaponModule
-  moduleId: HAMMER
-  displayName: Hammer
-  icon: {fileID: 4301844918096825189, guid: 6b23fdafe38222f4da01c0e0c7887de7, type: 3}
+  moduleId: STAFF
+  displayName: Staff
+  icon: {fileID: 8573549099317436776, guid: d6f3c04cd046e474b99dd71fb63181ce, type: 3}
   description: 
-  baseDamage: 8
-  attackCooldown: 1.5
-  attackType: 0
-  projectilePrefab: {fileID: 0}
+  baseDamage: 2
+  attackCooldown: 0.3
+  attackType: 2
+  projectilePrefab: {fileID: 7494990998535483223, guid: cb41c135269a016478d238ed6e200b1a, type: 3}
   projectileSpeed: 10
   aoeRadius: 0
-  weaponModelPrefab: {fileID: 8097238424323401368, guid: 03022040e665c3c41a1da376c27d2274, type: 3}
+  weaponModelPrefab: {fileID: 8097238424323401368, guid: 3ac4fc9da7599e147b56a760ddbf078c, type: 3}
   modelOffset: {x: 0, y: 0, z: 0}
   modelRotation: {x: 0, y: 0, z: 0}
-  weaponSprite: {fileID: 4301844918096825189, guid: 6b23fdafe38222f4da01c0e0c7887de7, type: 3}
+  weaponSprite: {fileID: 8573549099317436776, guid: d6f3c04cd046e474b99dd71fb63181ce, type: 3}
   attackAnimation: {fileID: 0}

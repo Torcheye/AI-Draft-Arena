@@ -1,5 +1,7 @@
 using UnityEngine;
+using DG.Tweening;
 using AdaptiveDraftArena.Modules;
+using AdaptiveDraftArena.Combat;
 
 namespace AdaptiveDraftArena.Visual
 {
@@ -13,14 +15,21 @@ namespace AdaptiveDraftArena.Visual
         [Header("Particle Effects")]
         [SerializeField] private Transform particleAnchor;
 
+        [Header("Health Bar")]
+        [SerializeField] HealthBarUI healthBarUI;
+
         private GameObject currentAuraEffect;
         private ICombination combination;
         private Renderer[] bodyRenderers;
         private Renderer[] weaponRenderers;
         private MaterialPropertyBlock propertyBlock;
         private Color[][] cachedOriginalColors;
-        private Coroutine flashCoroutine;
+        private Sequence hitEffectSequence;
         private static readonly int ColorProperty = Shader.PropertyToID("_Color");
+
+        // Visual enhancement components
+        private TroopAnimationController animationController;
+        private TroopController cachedTroopController;
 
         public void Compose(ICombination troopCombination)
         {
@@ -42,12 +51,12 @@ namespace AdaptiveDraftArena.Visual
             {
                 bodyModel = Instantiate(combination.body.bodyModelPrefab, transform);
                 bodyModel.transform.localPosition = Vector3.zero;
-                bodyModel.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+                bodyModel.transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
                 bodyRenderers = bodyModel.GetComponentsInChildren<Renderer>();
 
                 // Create weapon socket at specified position
                 var socketObj = new GameObject("WeaponSocket");
-                socketObj.transform.SetParent(transform);
+                socketObj.transform.SetParent(bodyModel.transform);
                 socketObj.transform.localPosition = combination.body.weaponSocketPosition;
                 socketObj.transform.localRotation = Quaternion.identity;
                 weaponSocket = socketObj.transform;
@@ -73,8 +82,8 @@ namespace AdaptiveDraftArena.Visual
                 if (combination.weapon.weaponModelPrefab != null)
                 {
                     weaponModel = Instantiate(combination.weapon.weaponModelPrefab, weaponSocket);
-                    weaponModel.transform.localPosition = combination.weapon.modelOffset;
-                    weaponModel.transform.localRotation = Quaternion.Euler(combination.weapon.modelRotation);
+                    //weaponModel.transform.localPosition = combination.weapon.modelOffset;
+                    //weaponModel.transform.localRotation = Quaternion.Euler(combination.weapon.modelRotation);
                     weaponRenderers = weaponModel.GetComponentsInChildren<Renderer>();
                 }
                 else
@@ -110,6 +119,11 @@ namespace AdaptiveDraftArena.Visual
 
             // Cache original colors for flash effect
             CacheOriginalColors();
+
+            // Initialize visual enhancements
+            InitializeVisualEnhancements();
+            
+            healthBarUI.Initialize(transform, GetComponent<HealthComponent>());
         }
 
         private void ApplyTint(Color tint)
@@ -141,53 +155,111 @@ namespace AdaptiveDraftArena.Visual
             }
         }
 
+        private void InitializeVisualEnhancements()
+        {
+            cachedTroopController = GetComponent<TroopController>();
+            if (cachedTroopController == null) return;
+
+            // Initialize animation controller
+            animationController = gameObject.AddComponent<TroopAnimationController>();
+            animationController.Initialize(
+                bodyModel?.transform,
+                weaponModel?.transform,
+                cachedTroopController.Movement
+            );
+            
+            // Subscribe to events
+            if (cachedTroopController != null)
+            {
+                if (cachedTroopController.Combat != null)
+                {
+                    cachedTroopController.Combat.OnAttack += HandleAttack;
+                }
+
+                if (cachedTroopController.Health != null)
+                {
+                    cachedTroopController.Health.OnTakeDamage += HandleDamage;
+                }
+            }
+        }
+
+        private void OnDisable()
+        {
+            // Unsubscribe from events
+            if (cachedTroopController != null)
+            {
+                if (cachedTroopController.Combat != null)
+                {
+                    cachedTroopController.Combat.OnAttack -= HandleAttack;
+                }
+
+                if (cachedTroopController.Health != null)
+                {
+                    cachedTroopController.Health.OnTakeDamage -= HandleDamage;
+                }
+            }
+
+            CleanupVisualEffects();
+        }
+
+        private void HandleAttack()
+        {
+            if (animationController != null)
+            {
+                animationController.PlayAttackAnimation();
+            }
+        }
+
+        private void HandleDamage(float damage, GameObject attacker)
+        {
+            PlayHitEffect();
+        }
+
         public void PlayHitEffect()
         {
             if (bodyRenderers == null || bodyRenderers.Length == 0)
                 return;
 
-            if (flashCoroutine != null)
-                StopCoroutine(flashCoroutine);
+            // Kill any existing hit effect sequence
+            hitEffectSequence?.Kill();
 
-            flashCoroutine = StartCoroutine(FlashRoutine());
-        }
-
-        private System.Collections.IEnumerator FlashRoutine()
-        {
             if (propertyBlock == null)
                 propertyBlock = new MaterialPropertyBlock();
 
-            // Store original colors and apply white
-            for (int i = 0; i < bodyRenderers.Length; i++)
+            // Create enhanced hit effect sequence
+            hitEffectSequence = DOTween.Sequence();
+
+            // // Flash white using MaterialPropertyBlock (0.05s)
+            // hitEffectSequence.AppendCallback(() =>
+            // {
+            //     foreach (var renderer in bodyRenderers)
+            //     {
+            //         renderer.GetPropertyBlock(propertyBlock);
+            //         propertyBlock.SetColor(ColorProperty, Color.white);
+            //         renderer.SetPropertyBlock(propertyBlock);
+            //     }
+            // });
+
+            // Scale punch effect (10% increase)
+            if (bodyModel != null)
             {
-                var materials = bodyRenderers[i].materials;
-                for (int j = 0; j < materials.Length; j++)
-                {
-                    cachedOriginalColors[i][j] = materials[j].color;
-                    materials[j].color = Color.white;
-                }
+                var originalScale = bodyModel.transform.localScale;
+                hitEffectSequence.Join(
+                    bodyModel.transform.DOPunchScale(originalScale * 0.1f, 0.15f, 1, 0.5f)
+                );
             }
 
-            yield return new WaitForSeconds(0.1f);
+            // Wait for flash duration
+            //hitEffectSequence.AppendInterval(0.05f);
 
-            // Restore original colors using MaterialPropertyBlock
-            for (int i = 0; i < bodyRenderers.Length; i++)
-            {
-                bodyRenderers[i].GetPropertyBlock(propertyBlock);
-                propertyBlock.SetColor(ColorProperty, cachedOriginalColors[i][0]);
-                bodyRenderers[i].SetPropertyBlock(propertyBlock);
-            }
-
-            flashCoroutine = null;
-        }
-
-        private void OnDisable()
-        {
-            if (flashCoroutine != null)
-            {
-                StopCoroutine(flashCoroutine);
-                flashCoroutine = null;
-            }
+            // Restore original tint color
+            // hitEffectSequence.AppendCallback(() =>
+            // {
+            //     if (combination?.effect != null)
+            //     {
+            //         ApplyTint(combination.effect.tintColor);
+            //     }
+            // });
         }
 
         private void OnDestroy()
@@ -196,6 +268,11 @@ namespace AdaptiveDraftArena.Visual
             {
                 Destroy(currentAuraEffect);
             }
+        }
+
+        private void CleanupVisualEffects()
+        {
+            hitEffectSequence?.Kill();
         }
     }
 }

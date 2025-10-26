@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using AdaptiveDraftArena.Modules;
 
@@ -7,6 +8,9 @@ namespace AdaptiveDraftArena.Combat
     {
         public TroopController CurrentTarget { get; private set; }
         public bool IsInRange { get; private set; }
+
+        // Events
+        public event Action OnAttack;
 
         private TroopController owner;
         private TargetingSystem targeting;
@@ -83,6 +87,9 @@ namespace AdaptiveDraftArena.Combat
         private void PerformAttack()
         {
             if (CurrentTarget == null || !CurrentTarget.IsAlive) return;
+
+            // Trigger attack event for visual feedback
+            OnAttack?.Invoke();
 
             // Calculate damage
             var damage = CalculateDamage();

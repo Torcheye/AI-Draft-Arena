@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 84e1e03e0bafc324fa600c614acde54d, type: 3}
+  m_Name: Combo_FireBMMHammer
+  m_EditorClassIdentifier: Assembly-CSharp::AdaptiveDraftArena.Modules.TroopCombination
+  _body: {fileID: 11400000, guid: faf7f7b413f5be14d892cef05be71a8a, type: 2}
+  _weapon: {fileID: 11400000, guid: f962699703dff2643901101526b452a5, type: 2}
+  _ability: {fileID: 11400000, guid: 1569c6f001958aa4f9f23da2aa4d6fd9, type: 2}
+  _effect: {fileID: 11400000, guid: 3f6cec85805e16a4d90f60f418714c6d, type: 2}
+  _amount: 1
+  _isAIGenerated: 0
+  _generationRound: 0
+  counterReasoning: 
