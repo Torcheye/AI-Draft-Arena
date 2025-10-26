@@ -28,6 +28,7 @@ namespace AdaptiveDraftArena.Modules
         [Header("Visuals - 3D")]
         public GameObject weaponModelPrefab; // 3D model for gameplay
         public Vector3 modelOffset; // 3D offset from weapon socket
+        public Vector3 modelRotation; // 3D rotation from weapon socket
 
         [Header("Visuals - UI")]
         public Sprite weaponSprite; // Icon for draft/UI screens

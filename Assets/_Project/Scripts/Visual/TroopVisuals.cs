@@ -42,12 +42,12 @@ namespace AdaptiveDraftArena.Visual
             {
                 bodyModel = Instantiate(combination.body.bodyModelPrefab, transform);
                 bodyModel.transform.localPosition = Vector3.zero;
-                bodyModel.transform.localRotation = Quaternion.identity;
+                bodyModel.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
                 bodyRenderers = bodyModel.GetComponentsInChildren<Renderer>();
 
                 // Create weapon socket at specified position
                 var socketObj = new GameObject("WeaponSocket");
-                socketObj.transform.SetParent(bodyModel.transform);
+                socketObj.transform.SetParent(transform);
                 socketObj.transform.localPosition = combination.body.weaponSocketPosition;
                 socketObj.transform.localRotation = Quaternion.identity;
                 weaponSocket = socketObj.transform;
@@ -74,7 +74,7 @@ namespace AdaptiveDraftArena.Visual
                 {
                     weaponModel = Instantiate(combination.weapon.weaponModelPrefab, weaponSocket);
                     weaponModel.transform.localPosition = combination.weapon.modelOffset;
-                    weaponModel.transform.localRotation = Quaternion.identity;
+                    weaponModel.transform.localRotation = Quaternion.Euler(combination.weapon.modelRotation);
                     weaponRenderers = weaponModel.GetComponentsInChildren<Renderer>();
                 }
                 else

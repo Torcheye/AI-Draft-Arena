@@ -10,17 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe97ec8537db1ca429573f9dfb3c02ea, type: 3}
-  m_Name: Body_Knight
+  m_Name: Body_Lucy
   m_EditorClassIdentifier: Assembly-CSharp::AdaptiveDraftArena.Modules.BodyModule
-  moduleId: KNIGHT
-  displayName: Knight Body
-  icon: {fileID: 0}
+  moduleId: LUCY
+  displayName: Lucy
+  icon: {fileID: 21300000, guid: caab8de993989b8488d2e0b568ec31f6, type: 3}
   description: 
   baseHP: 10
   movementSpeed: 3
   attackRange: 1.5
   size: 1
-  bodyModelPrefab: {fileID: 0}
-  weaponSocketPosition: {x: 0, y: 0, z: 0}
-  bodySprite: {fileID: 0}
+  bodyModelPrefab: {fileID: 919132149155446097, guid: 1e6d841577dd4e641b471695b25363da, type: 3}
+  weaponSocketPosition: {x: -0.472, y: 0.794, z: 0.645}
+  bodySprite: {fileID: 21300000, guid: caab8de993989b8488d2e0b568ec31f6, type: 3}
   role: 0

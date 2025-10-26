@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 84e1e03e0bafc324fa600c614acde54d, type: 3}
-  m_Name: Combo_NatureKnight
+  m_Name: Combo_WaterLucy
   m_EditorClassIdentifier: Assembly-CSharp::AdaptiveDraftArena.Modules.TroopCombination
   body: {fileID: 11400000, guid: de8d6415c572d394a8007de5c0d1886e, type: 2}
   weapon: {fileID: 11400000, guid: f962699703dff2643901101526b452a5, type: 2}
   ability: {fileID: 11400000, guid: 1569c6f001958aa4f9f23da2aa4d6fd9, type: 2}
-  effect: {fileID: 11400000, guid: 954d9cc9db7e4e6498e5068db5174392, type: 2}
+  effect: {fileID: 11400000, guid: 484b88adcb0502845a3f6941a117d562, type: 2}
   amount: 2
   isAIGenerated: 0
   generationRound: 0
