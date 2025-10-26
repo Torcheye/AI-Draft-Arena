@@ -109,13 +109,44 @@ namespace AdaptiveDraftArena.Draft
             CurrentPlayerOptions = GetRandomCombinations(fullPool, config.draftOptionsCount);
             matchState.PlayerDraftOptions = new List<TroopCombination>(CurrentPlayerOptions);
 
-            // Generate AI options (3 random combinations)
-            CurrentAIOptions = GetRandomCombinations(fullPool, config.draftOptionsCount);
+            // Generate AI options with guaranteed counter inclusion
+            CurrentAIOptions = GenerateAIOptions(fullPool, config.draftOptionsCount);
             matchState.AIDraftOptions = new List<TroopCombination>(CurrentAIOptions);
 
             OnPlayerOptionsGenerated?.Invoke(CurrentPlayerOptions);
 
             Debug.Log($"Generated draft options - Player: {CurrentPlayerOptions.Count} | AI: {CurrentAIOptions.Count}");
+        }
+
+        /// <summary>
+        /// Generates AI draft options, guaranteeing the latest generated counter is included.
+        /// </summary>
+        private List<TroopCombination> GenerateAIOptions(List<TroopCombination> pool, int count)
+        {
+            // Check if we have a recently generated counter
+            TroopCombination latestCounter = null;
+            if (matchState.AIGeneratedCombinations != null && matchState.AIGeneratedCombinations.Count > 0)
+            {
+                latestCounter = matchState.AIGeneratedCombinations[matchState.AIGeneratedCombinations.Count - 1];
+                Debug.Log($"[DraftController] Including latest AI counter in options: {latestCounter.DisplayName}");
+            }
+
+            // If no counter generated yet, just return random options
+            if (latestCounter == null)
+            {
+                return GetRandomCombinations(pool, count);
+            }
+
+            // Build AI options: 1 guaranteed counter + (count - 1) random
+            var aiOptions = new List<TroopCombination> { latestCounter };
+
+            // Get remaining random options (excluding the counter to avoid duplicates)
+            var poolWithoutCounter = pool.Where(c => c != latestCounter).ToList();
+            var randomOptions = GetRandomCombinations(poolWithoutCounter, count - 1);
+
+            aiOptions.AddRange(randomOptions);
+
+            return aiOptions;
         }
 
         private List<TroopCombination> GetRandomCombinations(List<TroopCombination> pool, int count)
@@ -225,9 +256,32 @@ namespace AdaptiveDraftArena.Draft
                 return;
             }
 
-            // Simple random selection for now
-            var randomIndex = UnityEngine.Random.Range(0, CurrentAIOptions.Count);
-            AISelection = CurrentAIOptions[randomIndex];
+            // Phase 1: AI strongly prefers first option (generated counter) with 80% probability
+            // Remaining 20%: picks randomly from all options for variety
+            int selectedIndex;
+            if (matchState.AIGeneratedCombinations != null && matchState.AIGeneratedCombinations.Count > 0)
+            {
+                // If we have a generated counter (it's in position 0), prefer it
+                float roll = UnityEngine.Random.Range(0f, 1f);
+                if (roll < 0.8f)
+                {
+                    selectedIndex = 0; // Pick the counter (80% chance)
+                    Debug.Log("[DraftController] AI choosing generated counter (strategic pick)");
+                }
+                else
+                {
+                    selectedIndex = UnityEngine.Random.Range(0, CurrentAIOptions.Count); // Random (20% chance)
+                    Debug.Log("[DraftController] AI choosing random option (variety)");
+                }
+            }
+            else
+            {
+                // Round 1: No counter generated yet, pick randomly
+                selectedIndex = UnityEngine.Random.Range(0, CurrentAIOptions.Count);
+                Debug.Log("[DraftController] AI choosing random option (no counter yet)");
+            }
+
+            AISelection = CurrentAIOptions[selectedIndex];
             aiHasSelected = true;
             matchState.AISelectedCombo = AISelection;
 

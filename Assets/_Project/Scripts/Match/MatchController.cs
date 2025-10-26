@@ -7,6 +7,7 @@ using AdaptiveDraftArena.Modules;
 using AdaptiveDraftArena.Draft;
 using AdaptiveDraftArena.Battle;
 using AdaptiveDraftArena.Combat;
+using AdaptiveDraftArena.AI;
 
 namespace AdaptiveDraftArena.Match
 {
@@ -16,6 +17,7 @@ namespace AdaptiveDraftArena.Match
         [SerializeField] private DraftController draftController;
         [SerializeField] private BattleController battleController;
         [SerializeField] private TroopSpawner troopSpawner;
+        [SerializeField] private AIGenerationOrchestrator aiOrchestrator;
 
         public MatchState State { get; private set; }
         public MatchPhase CurrentPhase => State?.CurrentPhase ?? MatchPhase.MatchStart;
@@ -45,6 +47,11 @@ namespace AdaptiveDraftArena.Match
             if (troopSpawner == null)
             {
                 troopSpawner = GetComponent<TroopSpawner>();
+            }
+
+            if (aiOrchestrator == null)
+            {
+                aiOrchestrator = GetComponent<AIGenerationOrchestrator>();
             }
         }
 
@@ -86,6 +93,13 @@ namespace AdaptiveDraftArena.Match
             if (troopSpawner == null)
             {
                 Debug.LogError("TroopSpawner not found! Please assign in Inspector or add component.");
+                enabled = false;
+                return;
+            }
+
+            if (aiOrchestrator == null)
+            {
+                Debug.LogError("AIGenerationOrchestrator not found! Please assign in Inspector or add component.");
                 enabled = false;
                 return;
             }
@@ -285,7 +299,31 @@ namespace AdaptiveDraftArena.Match
             Debug.Log($"Round {State.CurrentRound} winner: {roundResult.Winner}");
             Debug.Log($"Score - Player: {State.PlayerWins}, AI: {State.AIWins}");
 
-            // TODO: AI generation would happen here
+            // Store player and AI picks in history for pattern analysis
+            if (State.PlayerSelectedCombo != null)
+            {
+                State.PlayerPickHistory.Add(State.PlayerSelectedCombo);
+            }
+
+            if (State.AISelectedCombo != null)
+            {
+                State.AIPickHistory.Add(State.AISelectedCombo);
+            }
+
+            // Generate AI counter for next round (if not final round)
+            if (State.CurrentRound < 7)
+            {
+                var counter = await aiOrchestrator.GenerateCounterAsync(State, cancellationToken);
+                if (counter != null)
+                {
+                    State.AIGeneratedCombinations.Add(counter);
+                    Debug.Log($"AI generated counter: {counter.DisplayName}");
+                }
+                else
+                {
+                    Debug.LogWarning("AI failed to generate counter! Will use base combinations only.");
+                }
+            }
 
             await UniTask.Delay(TimeSpan.FromSeconds(2), cancellationToken: cancellationToken);
 

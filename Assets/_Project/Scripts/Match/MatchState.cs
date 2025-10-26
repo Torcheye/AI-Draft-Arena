@@ -24,6 +24,7 @@ namespace AdaptiveDraftArena.Match
         // History
         public List<RoundResult> RoundHistory { get; set; }
         public List<TroopCombination> PlayerPickHistory { get; set; }
+        public List<TroopCombination> AIPickHistory { get; set; }
 
         public MatchState()
         {
@@ -39,6 +40,7 @@ namespace AdaptiveDraftArena.Match
 
             RoundHistory = new List<RoundResult>();
             PlayerPickHistory = new List<TroopCombination>();
+            AIPickHistory = new List<TroopCombination>();
         }
 
         public bool IsMatchOver()
