@@ -41,6 +41,13 @@ namespace AdaptiveDraftArena.Core
             //     CleanupExistingTroops();
             //     SpawnTestTroops();
             // }
+            
+            // press R to restart the match
+            if (Input.GetKeyDown(KeyCode.R))
+            {
+                // reload scene
+                UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
+            }
         }
 
         public void SpawnTestTroops()
