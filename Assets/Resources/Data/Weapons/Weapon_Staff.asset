@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Staff
   icon: {fileID: 8573549099317436776, guid: d6f3c04cd046e474b99dd71fb63181ce, type: 3}
   description: 
-  baseDamage: 2
+  baseDamage: 1
   attackCooldown: 0.45
   attackType: 2
   projectilePrefab: {fileID: 7494990998535483223, guid: cb41c135269a016478d238ed6e200b1a, type: 3}

@@ -10,17 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe97ec8537db1ca429573f9dfb3c02ea, type: 3}
-  m_Name: Body_BMM
+  m_Name: Body_Dan
   m_EditorClassIdentifier: Assembly-CSharp::AdaptiveDraftArena.Modules.BodyModule
-  moduleId: BMM
-  displayName: BMM
-  icon: {fileID: 21300000, guid: 69362d341915148419f7934fd6ecadf0, type: 3}
+  moduleId: DAN
+  displayName: Dan
+  icon: {fileID: 21300000, guid: 74beab631f4208f4cbcfd7be0967a311, type: 3}
   description: 
-  baseHP: 20
-  movementSpeed: 1.5
-  attackRange: 2
-  size: 1.5
-  bodyModelPrefab: {fileID: 6101885077213945516, guid: 8c75ff41df002af4abf7572df9625487, type: 3}
-  weaponSocketPosition: {x: -0.629, y: 1.379, z: 0.174}
-  bodySprite: {fileID: 21300000, guid: 69362d341915148419f7934fd6ecadf0, type: 3}
-  role: 0
+  baseHP: 5
+  movementSpeed: 1
+  attackRange: 12
+  size: 1
+  bodyModelPrefab: {fileID: 9123885077407940658, guid: 17160f9565a3dc440a615fcf8272318d, type: 3}
+  weaponSocketPosition: {x: -0.446, y: 0.752, z: -0.027}
+  bodySprite: {fileID: 21300000, guid: 74beab631f4208f4cbcfd7be0967a311, type: 3}
+  role: 2

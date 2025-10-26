@@ -81,25 +81,25 @@ namespace AdaptiveDraftArena.Core
             Debug.Log("Cleaned up existing troops");
         }
 
-        private void OnGUI()
-        {
-            // Simple debug UI
-            GUI.Label(new Rect(10, 10, 400, 30), $"Press {respawnKey} to respawn troops");
-
-            var playerTroops = TargetingSystem.GetAliveTroops(Team.Player);
-            var aiTroops = TargetingSystem.GetAliveTroops(Team.AI);
-
-            GUI.Label(new Rect(10, 40, 400, 30), $"Player Troops: {playerTroops.Count}");
-            GUI.Label(new Rect(10, 70, 400, 30), $"AI Troops: {aiTroops.Count}");
-
-            if (playerTroops.Count == 0 && aiTroops.Count > 0)
-            {
-                GUI.Label(new Rect(10, 100, 400, 30), "AI WINS!");
-            }
-            else if (aiTroops.Count == 0 && playerTroops.Count > 0)
-            {
-                GUI.Label(new Rect(10, 100, 400, 30), "PLAYER WINS!");
-            }
-        }
+        // private void OnGUI()
+        // {
+        //     // Simple debug UI
+        //     GUI.Label(new Rect(10, 10, 400, 30), $"Press {respawnKey} to respawn troops");
+        //
+        //     var playerTroops = TargetingSystem.GetAliveTroops(Team.Player);
+        //     var aiTroops = TargetingSystem.GetAliveTroops(Team.AI);
+        //
+        //     GUI.Label(new Rect(10, 40, 400, 30), $"Player Troops: {playerTroops.Count}");
+        //     GUI.Label(new Rect(10, 70, 400, 30), $"AI Troops: {aiTroops.Count}");
+        //
+        //     if (playerTroops.Count == 0 && aiTroops.Count > 0)
+        //     {
+        //         GUI.Label(new Rect(10, 100, 400, 30), "AI WINS!");
+        //     }
+        //     else if (aiTroops.Count == 0 && playerTroops.Count > 0)
+        //     {
+        //         GUI.Label(new Rect(10, 100, 400, 30), "PLAYER WINS!");
+        //     }
+        // }
     }
 }
